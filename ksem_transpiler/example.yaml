@@ -1,0 +1,163 @@
+meta_settings:
+  comment_template: |-
+    {product}
+    {instrument_group}
+    Factory Preset
+    {instrument}
+    -----------------------
+    Control Changes:
+    CC 1 Crossfade
+    CC 2 Velocity XF
+    CC 5 Return 1 Volume
+    CC 7 Master Volume
+    CC 11 Expression
+    CC 22 Attack
+    CC 23 Release
+    CC 24 Filter
+    CC 25 Human Delay
+    CC 26 Human Tuning
+    CC 27 Human Amount
+    CC 30 Dynamic Range
+    CC 33 Legato Blur
+    CC 34 Stretch Factor
+  colors:
+    Legato: "#334b54" # Blue
+    Sustain: "#373354" # Purple
+    Dynamics: "#533354" # Pink
+    Staccato: "#543338" # Orange
+    Spiccato: "#425433" # Yellow
+    Pizzicato: "#335441" # Green
+    Tremolo: "#2b2b2b" # Dark gray
+    Trill: "#3d3d3d" # Gray
+    Harmonics: "#606060" # Light gray
+  middle_c: C3
+
+  midi_controls:
+    m01_modulation:
+      enabled: false
+      value: 0
+    m02_breath:
+      enabled: false
+      value: 0
+    m04_foot:
+      enabled: false
+      value: 0
+    m05_portamento:
+      enabled: false
+      value: 0
+    m07_volume:
+      enabled: false
+      value: 0
+    m10_pan:
+      enabled: false
+      value: 0
+    m11_expression:
+      enabled: false
+      value: 0
+    m64_hold:
+      enabled: false
+      value: 0
+    m65_portamento:
+      enabled: false
+      value: 0
+    m66_sostenuto:
+      enabled: false
+      value: 0
+    m67_soft:
+      enabled: false
+      value: 0
+    m68_legato:
+      enabled: false
+      value: 0
+    m71_resonance:
+      enabled: false
+      value: 0
+    m74_frequency:
+      enabled: false
+      value: 0
+    m91_reverb:
+      enabled: false
+      value: 0
+    m93_chorus:
+      enabled: false
+      value: 0
+    custom_01:
+      midi_cc: 0
+      enabled: false
+      value: 0
+    custom_02:
+      midi_cc: 0
+      enabled: false
+      value: 0
+    custom_03:
+      midi_cc: 0
+      enabled: false
+      value: 0
+    custom_04:
+      midi_cc: 0
+      enabled: false
+      value: 0
+    custom_05:
+      midi_cc: 0
+      enabled: false
+      value: 0
+    custom_06:
+      midi_cc: 0
+      enabled: false
+      value: 0
+    custom_07:
+      midi_cc: 0
+      enabled: false
+      value: 0
+    custom_08:
+      midi_cc: 0
+      enabled: false
+      value: 0
+
+  custom_bank:
+    knob_01:
+      name: Articulation
+      control: custom_01
+    knob_02:
+      name: Expression
+      control: custom_02
+    # ...
+
+products:
+  VSL SYNCHRON-ized Special Editions:
+    instrument_groups:
+      01 Solo Strings:
+        instruments:
+          01 Violin 1 PLUS:
+            keyswitches:
+              root_octaves:
+                key: 0
+                second_key: 1
+              mapping: [name, key, second_key, color]
+              values:
+                - [Legato, D, C, Legato]
+                - [Legato portamento, D, C#, Legato]
+                - [Legato repetitions, C, D#, Legato]
+          05 Cello 1 PLUS:
+            keyswitches:
+              root_octaves:
+                key: 0
+                second_key: 6
+              mapping: [name, key, second_key, color]
+              values:
+                - [Legato, D, C, Legato]
+                - [Legato portamento, D, C#, Legato]
+                - [Legato repetitions, C, D#, Legato]
+
+      11 Flutes:
+        instruments:
+          01 Piccolo PLUS:
+            keyswitches:
+              root_octaves:
+                key: 0
+                second_key: 1
+              mapping: [name, key, second_key, color]
+              values:
+                - [Legato, D, C, Legato]
+                - [Portato, C, C#, Staccato]
+                - [Half tone trill, E, D#, Trill]

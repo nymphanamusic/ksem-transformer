@@ -1,0 +1,30 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "inputs": [
+    {
+      "id": "module_name",
+      "type": "promptString",
+      "description": "Module to run",
+      "default": "ksem_transpiler.models.yaml_.root"
+    }
+  ],
+  "configurations": [
+    {
+      "name": "Run module",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "${input:module_name}",
+      "justMyCode": false
+    },
+    {
+      "name": "Python Debugger: Current File",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal"
+    }
+  ]
+}

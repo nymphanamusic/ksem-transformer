@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "ksem-transpiler"
+version = "0.1.0"
+description = ""
+authors = ["***REMOVED*** <***REMOVED***>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+attrs = "^23.2.0"
+pydantic = "^2.7.1"
+pyyaml = "^6.0.1"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2.0"
+ipython = "^8.24.0"
+
+[tool.black]
+skip-magic-trailing-comma = true
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
