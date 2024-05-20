@@ -21,11 +21,16 @@ KSEM_VERSION = "4.2"
 
 
 class MidiControl(BaseModel):
+    """
+    Represents a MIDI control with its enabled state, value, and optional MIDI CC number.
+    """
+
     enabled: bool
     value: int
     midi_cc: int | None = None
 
 
+# Mapping of internal MIDI control names to KSEM control names
 midi_control_to_ksem = {
     "m01_modulation": "01Modulation",
     "m02_breath": "02Breath",
@@ -55,6 +60,10 @@ midi_control_to_ksem = {
 
 
 class MidiControls(BaseModel):
+    """
+    Represents a collection of MIDI controls.
+    """
+
     m01_modulation: MidiControl
     m02_breath: MidiControl
     m04_foot: MidiControl
@@ -81,6 +90,9 @@ class MidiControls(BaseModel):
     custom_08: MidiControl
 
     def to_ksem_config(self) -> KsemMidiControls:
+        """
+        Converts the MidiControls instance to a KsemMidiControls configuration.
+        """
         out = cast(KsemMidiControls, {})
         for field_name in self.model_fields:
             ksem_key = midi_control_to_ksem[field_name]
@@ -94,6 +106,7 @@ class MidiControls(BaseModel):
         return out
 
 
+# Mapping of internal MIDI control names to custom bank selection indices
 midi_control_to_ksem_custom_bank_selection = {
     "m01_modulation": 1,
     "m02_breath": 2,
@@ -152,11 +165,19 @@ MidiControlTarget = Literal[
 
 
 class CustomBankKnob(BaseModel):
+    """
+    Represents a knob in a custom bank with a name and control target.
+    """
+
     name: str = ""
     control_target: MidiControlTarget | None = None
 
 
 class CustomBank(BaseModel):
+    """
+    Represents a custom bank configuration with visibility and multiple knobs.
+    """
+
     custom_bank_visible: bool = True
     knob_01: CustomBankKnob = Field(default_factory=CustomBankKnob)
     knob_02: CustomBankKnob = Field(default_factory=CustomBankKnob)
@@ -168,6 +189,9 @@ class CustomBank(BaseModel):
     knob_08: CustomBankKnob = Field(default_factory=CustomBankKnob)
 
     def to_ksem_config(self) -> KsemCustomBank:
+        """
+        Converts the CustomBank instance to a KsemCustomBank configuration.
+        """
         out = cast(
             KsemCustomBank,
             {"showHideCustomBank": int(self.custom_bank_visible), "label": {}},
@@ -189,6 +213,10 @@ class CustomBank(BaseModel):
 
 
 class MetaSettings(BaseModel):
+    """
+    Represents meta settings for an instrument or product configuration.
+    """
+
     comment_template: str | None = None
     colors: dict[str, str] | None = None
     middle_c: Literal["C3", "C4", "C5"] = "C3"
@@ -210,6 +238,7 @@ type KeyswitchField = Literal[
     "color",
 ]
 
+# Mapping of keyswitch fields to KSEM keys
 keyswitch_field_to_ksem_key = {
     "name": "name",
     "key": "key",
@@ -225,11 +254,19 @@ keyswitch_field_to_ksem_key = {
 
 
 class KeyswitchesRootOctaves(BaseModel):
+    """
+    Represents the root octaves for keyswitches.
+    """
+
     key: int | None = None
     second_key: int | None = None
 
 
 class Keyswitches(BaseModel):
+    """
+    Represents the keyswitches configuration with root octaves, mapping, and values.
+    """
+
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     root_octaves: KeyswitchesRootOctaves = Field(default_factory=KeyswitchesRootOctaves)
@@ -237,6 +274,9 @@ class Keyswitches(BaseModel):
     values: list[list[Note | str | int]]
 
     def to_ksem_config(self, settings: MetaSettings) -> dict[str, KsemKeyswitchesEntry]:
+        """
+        Converts the Keyswitches instance to a KsemKeyswitchesEntry configuration.
+        """
         if "key" in self.mapping and self.root_octaves.key is None:
             raise ValueError(
                 "`root_octaves.key` must be defined since you're mapping `key`"
@@ -289,27 +329,46 @@ class Keyswitches(BaseModel):
 
 
 class Instrument(BaseModel):
+    """
+    Represents an instrument with meta settings and keyswitches.
+    """
+
     meta_settings: MetaSettings = Field(default_factory=MetaSettings)
     keyswitches: Keyswitches
 
 
 class InstrumentGroup(BaseModel):
+    """
+    Represents a group of instruments with shared meta settings.
+    """
+
     meta_settings: MetaSettings = Field(default_factory=MetaSettings)
     instruments: dict[str, Instrument]
 
 
 class Product(BaseModel):
+    """
+    Represents a product with meta settings and instrument groups.
+    """
+
     meta_settings: MetaSettings = Field(default_factory=MetaSettings)
     instrument_groups: dict[str, InstrumentGroup]
 
 
 @attrs.define()
 class KsemConfigFile:
+    """
+    Represents a KSEM configuration file with its path and data.
+    """
+
     file: Path
     data: KsemConfig
 
 
 def _combine_dicts[K, V](*dicts: dict[K, V]) -> dict[K, V]:
+    """
+    Combines multiple dictionaries into one, prioritizing non-None values.
+    """
     out: dict[K, V] = {}
     for dict_ in dicts:
         for k, v in dict_.items():
@@ -319,22 +378,35 @@ def _combine_dicts[K, V](*dicts: dict[K, V]) -> dict[K, V]:
 
 
 class Root(BaseModel):
+    """
+    Represents the root configuration containing meta settings and products.
+    """
+
     meta_settings: MetaSettings = Field(default_factory=MetaSettings)
     products: dict[str, Product]
 
     @classmethod
     def from_file(cls, file: Path) -> Root:
+        """
+        Loads a Root configuration from a YAML file.
+        """
         with file.open() as f:
             data = yaml.load(f, Loader=yaml.Loader)
         return Root.model_validate(data)
 
     def write_ksem_config_files(self, root_dir: Path) -> None:
+        """
+        Writes KSEM configuration files to the specified root directory.
+        """
         for config in self.to_ksem_configs():
             file = root_dir / config.file
             file.parent.mkdir(parents=True, exist_ok=True)
             file.write_text(json.dumps(config.data, indent=2))
 
     def to_ksem_configs(self) -> list[KsemConfigFile]:
+        """
+        Converts the Root configuration to a list of KsemConfigFile instances.
+        """
         out: list[KsemConfigFile] = []
 
         for product_name, product in self.products.items():
@@ -426,6 +498,7 @@ class Root(BaseModel):
 
 
 if __name__ == "__main__":
+    # Load the root configuration from a YAML file and write KSEM config files
     loaded = Root.from_file(
         Path(
             r"H:\Libraries\Documents\_code\audio\ksem-transpiler\ksem_transpiler\example.yaml"
