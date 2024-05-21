@@ -8,7 +8,7 @@ import yaml
 from pydantic import BaseModel, Field
 
 from ksem_transpiler.models.keyswitches import Keyswitches
-from ksem_transpiler.models.ksem_json_types import KsemConfig
+from ksem_transpiler.models.ksem_json_types import KsemConfig, KsemKeyswitchSettings
 from ksem_transpiler.models.settings import Settings
 from ksem_transpiler.models.utils import combine_dicts
 
@@ -69,6 +69,24 @@ class Root(BaseModel):
             data = yaml.load(f, Loader=yaml.Loader)
         return Root.model_validate(data)
 
+    def _get_keyswitch_settings(
+        self, instrument: Instrument, instrument_name: str
+    ) -> KsemKeyswitchSettings:
+        total_keyswitches = len(instrument.keyswitches.values)
+        if total_keyswitches <= 16:
+            amount_option_index = 1
+        elif total_keyswitches <= 32:
+            amount_option_index = 2
+        elif total_keyswitches <= 64:
+            amount_option_index = 2
+        else:
+            raise ValueError(
+                f"Instrument {instrument_name} has more than 64 keyswitches "
+                f"({total_keyswitches})"
+            )
+
+        return {"keySwitchAmount": amount_option_index, "sendMainKey": 1}
+
     def write_ksem_config_files(self, root_dir: Path) -> None:
         """
         Writes KSEM configuration files to the specified root directory.
@@ -112,7 +130,9 @@ class Root(BaseModel):
                         "ks": instrument.keyswitches.to_ksem_config(settings),
                         "midiControls": settings.midi_controls.to_ksem_config(),
                         "customBank": settings.custom_bank.to_ksem_config(),
-                        "keySwitchSettings": {"keySwitchAmount": 1, "sendMainKey": 1},
+                        "keySwitchSettings": self._get_keyswitch_settings(
+                            instrument, instrument_name
+                        ),
                         "xyFade": {
                             "chooseXFade": 3,
                             "chooseYFade": 13,
