@@ -1,4 +1,4 @@
-meta_settings:
+settings:
   comment_template: |-
     {product}
     {instrument_group}

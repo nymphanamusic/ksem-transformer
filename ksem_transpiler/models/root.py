@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 from ksem_transpiler.models.keyswitches import Keyswitches
 from ksem_transpiler.models.ksem_json_types import KsemConfig
-from ksem_transpiler.models.meta_settings import MetaSettings
+from ksem_transpiler.models.settings import Settings
 from ksem_transpiler.models.utils import combine_dicts
 
 KSEM_VERSION = "4.2"
@@ -27,37 +27,37 @@ class KsemConfigFile:
 
 class Instrument(BaseModel):
     """
-    Represents an instrument with meta settings and keyswitches.
+    Represents an instrument.
     """
 
-    meta_settings: MetaSettings = Field(default_factory=MetaSettings)
+    settings: Settings = Field(default_factory=Settings)
     keyswitches: Keyswitches
 
 
 class InstrumentGroup(BaseModel):
     """
-    Represents a group of instruments with shared meta settings.
+    Represents a group of instruments.
     """
 
-    meta_settings: MetaSettings = Field(default_factory=MetaSettings)
+    settings: Settings = Field(default_factory=Settings)
     instruments: dict[str, Instrument]
 
 
 class Product(BaseModel):
     """
-    Represents a product with meta settings and instrument groups.
+    Represents a product.
     """
 
-    meta_settings: MetaSettings = Field(default_factory=MetaSettings)
+    settings: Settings = Field(default_factory=Settings)
     instrument_groups: dict[str, InstrumentGroup]
 
 
 class Root(BaseModel):
     """
-    Represents the root configuration containing meta settings and products.
+    Represents the root configuration.
     """
 
-    meta_settings: MetaSettings = Field(default_factory=MetaSettings)
+    settings: Settings = Field(default_factory=Settings)
     products: dict[str, Product]
 
     @classmethod
@@ -88,23 +88,23 @@ class Root(BaseModel):
             for group_name, group in product.instrument_groups.items():
                 for instrument_name, instrument in group.instruments.items():
                     file = Path(product_name, group_name, f"{instrument_name}.json")
-                    settings = MetaSettings.model_validate(
+                    settings = Settings.model_validate(
                         combine_dicts(
-                            self.meta_settings.model_dump(),
-                            product.meta_settings.model_dump(),
-                            group.meta_settings.model_dump(),
-                            instrument.meta_settings.model_dump(),
+                            self.settings.model_dump(),
+                            product.settings.model_dump(),
+                            group.settings.model_dump(),
+                            instrument.settings.model_dump(),
                         )
                     )
                     if settings.midi_controls is None:
                         raise ValueError(
-                            "`midi_controls` must be exist on a `meta_settings` object "
-                            "in the hierarchy"
+                            "`midi_controls` must exist on a `settings` object in the "
+                            "hierarchy"
                         )
                     if settings.custom_bank is None:
                         raise ValueError(
-                            "`custom_bank` must be exist on a `meta_settings` object "
-                            "in the hierarchy"
+                            "`custom_bank` must exist on a `settings` object in the "
+                            "hierarchy"
                         )
 
                     ksem_config: KsemConfig = {

@@ -6,9 +6,9 @@ from ksem_transpiler.models.custom_bank import CustomBank
 from ksem_transpiler.models.midi_controls import MidiControls
 
 
-class MetaSettings(BaseModel):
+class Settings(BaseModel):
     """
-    Represents meta settings for an instrument or product configuration.
+    Represents settings for an instrument or product configuration.
     """
 
     comment_template: str | None = None

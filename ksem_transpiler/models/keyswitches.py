@@ -4,7 +4,7 @@ from typing import Literal, cast
 from pydantic import BaseModel, ConfigDict, Field
 
 from ksem_transpiler.models.ksem_json_types import EMPTY_VALUE, KsemKeyswitchesEntry
-from ksem_transpiler.models.meta_settings import MetaSettings
+from ksem_transpiler.models.settings import Settings
 from ksem_transpiler.note import Note, NoteLiteral
 
 type KeyswitchField = Literal[
@@ -55,7 +55,7 @@ class Keyswitches(BaseModel):
     mapping: list[KeyswitchField]
     values: list[list[Note | str | int]]
 
-    def to_ksem_config(self, settings: MetaSettings) -> dict[str, KsemKeyswitchesEntry]:
+    def to_ksem_config(self, settings: Settings) -> dict[str, KsemKeyswitchesEntry]:
         """
         Converts the Keyswitches instance to a KsemKeyswitchesEntry configuration.
         """
