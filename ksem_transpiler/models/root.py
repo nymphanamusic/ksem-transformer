@@ -2,17 +2,26 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Annotated, Any
 
 import attrs
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, ValidationInfo
 
 from ksem_transpiler.models.keyswitches import Keyswitches
 from ksem_transpiler.models.ksem_json_types import KsemConfig, KsemKeyswitchSettings
 from ksem_transpiler.models.settings import Settings
 from ksem_transpiler.models.utils import combine_dicts
+from ksem_transpiler.note import Note
 
 KSEM_VERSION = "4.2"
+
+
+def note_validator(v: Any, info: ValidationInfo) -> Note:
+    return Note.from_str(v)
+
+
+NoteField = Annotated[Note, BeforeValidator(note_validator)]
 
 
 @attrs.define()
@@ -25,13 +34,24 @@ class KsemConfigFile:
     data: KsemConfig
 
 
+class PitchRange(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    low: NoteField
+    high: NoteField
+
+
 class Instrument(BaseModel):
     """
     Represents an instrument.
     """
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     settings: Settings = Field(default_factory=Settings)
     keyswitches: Keyswitches
+    pitch_range: PitchRange
+    automation_key: NoteField = Note.from_str("C8")
 
 
 class InstrumentGroup(BaseModel):
@@ -69,7 +89,7 @@ class Root(BaseModel):
             data = yaml.load(f, Loader=yaml.Loader)
         return Root.model_validate(data)
 
-    def _get_keyswitch_settings(
+    def _make_keyswitch_settings(
         self, instrument: Instrument, instrument_name: str
     ) -> KsemKeyswitchSettings:
         total_keyswitches = len(instrument.keyswitches.values)
@@ -86,6 +106,100 @@ class Root(BaseModel):
             )
 
         return {"keySwitchAmount": amount_option_index, "sendMainKey": 1}
+
+    def _make_ksem_config(
+        self,
+        *,
+        product_name: str,
+        product: Product,
+        group_name: str,
+        group: InstrumentGroup,
+        instrument_name: str,
+        instrument: Instrument,
+    ):
+        file = Path(product_name, group_name, f"{instrument_name}.json")
+        settings = Settings.model_validate(
+            combine_dicts(
+                self.settings.model_dump(),
+                product.settings.model_dump(),
+                group.settings.model_dump(),
+                instrument.settings.model_dump(),
+            )
+        )
+        if settings.midi_controls is None:
+            raise ValueError(
+                "`midi_controls` must exist on a `settings` object in the " "hierarchy"
+            )
+        if settings.custom_bank is None:
+            raise ValueError(
+                "`custom_bank` must exist on a `settings` object in the " "hierarchy"
+            )
+
+        with Note.with_middle_c(settings.middle_c):
+            ksem_config: KsemConfig = {
+                "KSEM-Version": float(KSEM_VERSION),
+                "ks": instrument.keyswitches.to_ksem_config(settings),
+                "midiControls": settings.midi_controls.to_ksem_config(),
+                "customBank": settings.custom_bank.to_ksem_config(),
+                "keySwitchSettings": self._make_keyswitch_settings(
+                    instrument, instrument_name
+                ),
+                "xyFade": {
+                    "chooseXFade": 3,
+                    "chooseYFade": 13,
+                    "xyFadeShape": 0,
+                    "yOrientation": 0,
+                },
+                "delaySettings": {
+                    "usageRack": 0.0,
+                    "filterMIDICtrl": 0.0,
+                    "bufferSize": 3.0,
+                    "delayCompensation": 0.0,
+                    "lock": 1.0,
+                    "delayBank": 0.0,
+                    "delaySub": 0.1,
+                    "delayPgm": 0.2,
+                    "delayCC": 0.3,
+                    "delayMainKey": 0.5,
+                    "delayAdditionalKey": 0.6,
+                    "delayMIDINote": 1.0,
+                },
+                "automationSettings": {
+                    "automationKeySetting": 0,
+                    "ignoreRepeatedKey": 1,
+                    "autoTrigger": 0,
+                    "protectAutomation": 0,
+                },
+                "keySwitchManager": {
+                    "routerTrack": 1,
+                    "routerFilter": 0,
+                    "mpeSupportButton": 1,
+                },
+                "piano": {
+                    "showHidePiano": 1,
+                    "pitchLow": instrument.pitch_range.low.to_midi(),
+                    "pitchHigh": instrument.pitch_range.high.to_midi(),
+                    "automationKey": instrument.automation_key.to_midi(),
+                },
+                "pad": {
+                    "fontSize": [0, 0, 1],
+                    "justification": 0,
+                    "showKSNumbers": 1,
+                    "showKSNotes": 0,
+                    "fontSizeButton": 0,
+                },
+                "comments": (
+                    settings.comment_template.format(
+                        product=product_name,
+                        instrument_group=group_name,
+                        instrument=instrument_name,
+                    )
+                    if settings.comment_template
+                    else ""
+                ),
+            }
+
+        return KsemConfigFile(file=file, data=ksem_config)
 
     def write_ksem_config_files(self, root_dir: Path) -> None:
         """
@@ -105,90 +219,16 @@ class Root(BaseModel):
         for product_name, product in self.products.items():
             for group_name, group in product.instrument_groups.items():
                 for instrument_name, instrument in group.instruments.items():
-                    file = Path(product_name, group_name, f"{instrument_name}.json")
-                    settings = Settings.model_validate(
-                        combine_dicts(
-                            self.settings.model_dump(),
-                            product.settings.model_dump(),
-                            group.settings.model_dump(),
-                            instrument.settings.model_dump(),
+                    out.append(
+                        self._make_ksem_config(
+                            product_name=product_name,
+                            product=product,
+                            group_name=group_name,
+                            group=group,
+                            instrument_name=instrument_name,
+                            instrument=instrument,
                         )
                     )
-                    if settings.midi_controls is None:
-                        raise ValueError(
-                            "`midi_controls` must exist on a `settings` object in the "
-                            "hierarchy"
-                        )
-                    if settings.custom_bank is None:
-                        raise ValueError(
-                            "`custom_bank` must exist on a `settings` object in the "
-                            "hierarchy"
-                        )
-
-                    ksem_config: KsemConfig = {
-                        "KSEM-Version": float(KSEM_VERSION),
-                        "ks": instrument.keyswitches.to_ksem_config(settings),
-                        "midiControls": settings.midi_controls.to_ksem_config(),
-                        "customBank": settings.custom_bank.to_ksem_config(),
-                        "keySwitchSettings": self._get_keyswitch_settings(
-                            instrument, instrument_name
-                        ),
-                        "xyFade": {
-                            "chooseXFade": 3,
-                            "chooseYFade": 13,
-                            "xyFadeShape": 0,
-                            "yOrientation": 0,
-                        },
-                        "delaySettings": {
-                            "usageRack": 0.0,
-                            "filterMIDICtrl": 0.0,
-                            "bufferSize": 3.0,
-                            "delayCompensation": 0.0,
-                            "lock": 1.0,
-                            "delayBank": 0.0,
-                            "delaySub": 0.1,
-                            "delayPgm": 0.2,
-                            "delayCC": 0.3,
-                            "delayMainKey": 0.5,
-                            "delayAdditionalKey": 0.6,
-                            "delayMIDINote": 1.0,
-                        },
-                        "automationSettings": {
-                            "automationKeySetting": 0,
-                            "ignoreRepeatedKey": 1,
-                            "autoTrigger": 0,
-                            "protectAutomation": 0,
-                        },
-                        "keySwitchManager": {
-                            "routerTrack": 1,
-                            "routerFilter": 0,
-                            "mpeSupportButton": 1,
-                        },
-                        "piano": {
-                            "showHidePiano": 1,
-                            "pitchLow": 55,
-                            "pitchHigh": 106,
-                            "automationKey": 108,
-                        },
-                        "pad": {
-                            "fontSize": [0, 0, 1],
-                            "justification": 0,
-                            "showKSNumbers": 1,
-                            "showKSNotes": 0,
-                            "fontSizeButton": 0,
-                        },
-                        "comments": (
-                            settings.comment_template.format(
-                                product=product_name,
-                                instrument_group=group_name,
-                                instrument=instrument_name,
-                            )
-                            if settings.comment_template
-                            else ""
-                        ),
-                    }
-
-                    out.append(KsemConfigFile(file=file, data=ksem_config))
         return out
 
 

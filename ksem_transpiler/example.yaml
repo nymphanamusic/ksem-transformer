@@ -129,6 +129,9 @@ products:
       01 Solo Strings:
         instruments:
           01 Violin 1 PLUS:
+            pitch_range:
+              low: A3
+              high: C7
             keyswitches:
               root_octaves:
                 key: 0
@@ -138,7 +141,11 @@ products:
                 - [Legato, D, C, Legato]
                 - [Legato portamento, D, C#, Legato]
                 - [Legato repetitions, C, D#, Legato]
+
           05 Cello 1 PLUS:
+            pitch_range:
+              low: C0
+              high: B5
             keyswitches:
               root_octaves:
                 key: 0
@@ -152,6 +159,9 @@ products:
       11 Flutes:
         instruments:
           01 Piccolo PLUS:
+            pitch_range:
+              low: C4
+              high: G7
             keyswitches:
               root_octaves:
                 key: 0
