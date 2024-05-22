@@ -1,15 +1,17 @@
+import pytest
+
 from ksem_transpiler.note import Note
 
 
 class TestFromStr:
     def test_from_str_C3(self):
-        assert Note.from_str("C3") == Note("C", 3)
+        assert Note.from_str("C3", middle_c="C3") == Note("C", 3, middle_c="C3")
 
     def test_from_str_Csharp3(self):
-        assert Note.from_str("C#3") == Note("C#", 3)
+        assert Note.from_str("C#3", middle_c="C3") == Note("C#", 3, middle_c="C3")
 
     def test_from_str_Cneg1(self):
-        assert Note.from_str("C-1") == Note("C", -1)
+        assert Note.from_str("C-1", middle_c="C3") == Note("C", -1, middle_c="C3")
 
     def test_from_str_C10(self):
         assert Note.from_str("C10", middle_c="C5") == Note("C", 10, middle_c="C5")
@@ -32,7 +34,7 @@ class TestEquality:
         assert Note("F#", 3, middle_c="C3") == Note("Gb", 3, middle_c="C3")
 
     def test_equivalence_to_string(self):
-        assert Note("C", 3) == "C3"
+        assert Note("C", 3, middle_c="C3") == "C3"
 
 
 class TestToMidi:
@@ -82,3 +84,13 @@ class TestFromMidi:
             Note.from_midi(60, middle_c="C3").octave
             == Note.from_midi(60, middle_c="C4").octave
         )
+
+
+class TestNaiveNotes:
+    def test_naive_note_to_aware_note(self):
+        with Note.with_middle_c("C5"):
+            assert Note("C", 0).to_midi() == 0
+
+    def test_naive_note_to_midi_raises_exc(self):
+        with pytest.raises(TypeError):
+            Note("C", 2, middle_c=None).to_midi()
