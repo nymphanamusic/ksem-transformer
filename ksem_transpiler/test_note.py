@@ -94,3 +94,9 @@ class TestNaiveNotes:
     def test_naive_note_to_midi_raises_exc(self):
         with pytest.raises(TypeError):
             Note("C", 2, middle_c=None).to_midi()
+
+    def test_naive_note_exiting_context_raises_exc(self):
+        with Note.with_middle_c("C5"):
+            pass
+        with pytest.raises(TypeError):
+            Note("C", 2, middle_c=None).to_midi()
