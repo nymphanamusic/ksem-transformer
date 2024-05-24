@@ -1,6 +1,7 @@
-from typing import cast
+import typing
+from typing import Literal, cast
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ksem_transpiler.models.ksem_json_types import KsemMidiControls
 
@@ -32,15 +33,129 @@ midi_control_to_ksem = {
     "custom_08": "CcCustom08",
 }
 
+# Available MIDI CC KSEM options
+CustomOptions = Literal[
+    0,
+    3,
+    6,
+    8,
+    9,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    60,
+    61,
+    62,
+    63,
+    69,
+    70,
+    72,
+    73,
+    75,
+    76,
+    77,
+    78,
+    79,
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    86,
+    87,
+    88,
+    89,
+    90,
+    91,
+    92,
+    93,
+    94,
+    95,
+    96,
+    97,
+    98,
+    99,
+    100,
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107,
+    108,
+    109,
+    110,
+    111,
+    112,
+    113,
+    114,
+    115,
+    116,
+    117,
+    118,
+    119,
+]
+
+custom_options = [None, *typing.get_args(CustomOptions)]
+
 
 class MidiControl(BaseModel):
     """
     Represents a MIDI control with its enabled state, value, and optional MIDI CC number.
     """
 
-    enabled: bool
-    value: int
-    midi_cc: int | None = None
+    enabled: bool = False
+    value: int = 0
+
+
+class CustomMidiControl(MidiControl, BaseModel):
+    midi_cc: CustomOptions | None = None
 
 
 class MidiControls(BaseModel):
@@ -48,30 +163,31 @@ class MidiControls(BaseModel):
     Represents a collection of MIDI controls.
     """
 
-    m01_modulation: MidiControl
-    m02_breath: MidiControl
-    m04_foot: MidiControl
-    m05_portamento: MidiControl
-    m07_volume: MidiControl
-    m10_pan: MidiControl
-    m11_expression: MidiControl
-    m64_hold: MidiControl
-    m65_portamento: MidiControl
-    m66_sostenuto: MidiControl
-    m67_soft: MidiControl
-    m68_legato: MidiControl
-    m71_resonance: MidiControl
-    m74_frequency: MidiControl
-    m91_reverb: MidiControl
-    m93_chorus: MidiControl
-    custom_01: MidiControl
-    custom_02: MidiControl
-    custom_03: MidiControl
-    custom_04: MidiControl
-    custom_05: MidiControl
-    custom_06: MidiControl
-    custom_07: MidiControl
-    custom_08: MidiControl
+    m01_modulation: MidiControl = Field(default_factory=MidiControl)
+    m02_breath: MidiControl = Field(default_factory=MidiControl)
+    m04_foot: MidiControl = Field(default_factory=MidiControl)
+    m05_portamento: MidiControl = Field(default_factory=MidiControl)
+    m07_volume: MidiControl = Field(default_factory=MidiControl)
+    m10_pan: MidiControl = Field(default_factory=MidiControl)
+    m11_expression: MidiControl = Field(default_factory=MidiControl)
+    m64_hold: MidiControl = Field(default_factory=MidiControl)
+    m65_portamento: MidiControl = Field(default_factory=MidiControl)
+    m66_sostenuto: MidiControl = Field(default_factory=MidiControl)
+    m67_soft: MidiControl = Field(default_factory=MidiControl)
+    m68_legato: MidiControl = Field(default_factory=MidiControl)
+    m71_resonance: MidiControl = Field(default_factory=MidiControl)
+    m74_frequency: MidiControl = Field(default_factory=MidiControl)
+    m91_reverb: MidiControl = Field(default_factory=MidiControl)
+    m93_chorus: MidiControl = Field(default_factory=MidiControl)
+
+    custom_01: CustomMidiControl = Field(default_factory=CustomMidiControl)
+    custom_02: CustomMidiControl = Field(default_factory=CustomMidiControl)
+    custom_03: CustomMidiControl = Field(default_factory=CustomMidiControl)
+    custom_04: CustomMidiControl = Field(default_factory=CustomMidiControl)
+    custom_05: CustomMidiControl = Field(default_factory=CustomMidiControl)
+    custom_06: CustomMidiControl = Field(default_factory=CustomMidiControl)
+    custom_07: CustomMidiControl = Field(default_factory=CustomMidiControl)
+    custom_08: CustomMidiControl = Field(default_factory=CustomMidiControl)
 
     def to_ksem_config(self) -> KsemMidiControls:
         """
@@ -84,7 +200,8 @@ class MidiControls(BaseModel):
 
             out[f"{ksem_key}_button"] = int(field.enabled)
             out[f"{ksem_key}_dial"] = field.value
-            if field.midi_cc is not None:
-                out[f"{ksem_key}_num"] = field.midi_cc
+            if isinstance(field, CustomMidiControl):
+                # Get the MIDI CC's option index (magic values in KSEM)
+                out[f"{ksem_key}_num"] = custom_options.index(field.midi_cc)
 
         return out
