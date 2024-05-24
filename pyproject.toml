@@ -2,7 +2,7 @@
 name = "ksem-transpiler"
 version = "0.1.0"
 description = ""
-authors = ["***REMOVED*** <***REMOVED***>"]
+authors = ["Nymphana <hi@nymphana.com>"]
 license = "MIT"
 readme = "README.md"
 
