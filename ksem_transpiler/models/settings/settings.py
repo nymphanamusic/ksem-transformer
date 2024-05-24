@@ -2,9 +2,9 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from ksem_transpiler.models.custom_bank import CustomBank
-from ksem_transpiler.models.midi_controls import MidiControls
 from ksem_transpiler.models.note_field import NoteField
+from ksem_transpiler.models.settings.custom_bank import CustomBank
+from ksem_transpiler.models.settings.midi_controls import MidiControls
 from ksem_transpiler.note import Note
 
 

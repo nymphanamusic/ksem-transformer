@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from ksem_transpiler.models.keyswitches import Keyswitches
 from ksem_transpiler.models.ksem_json_types import KsemConfig, KsemKeyswitchSettings
-from ksem_transpiler.models.settings import Settings
+from ksem_transpiler.models.settings.settings import Settings
 from ksem_transpiler.models.utils import combine_dicts
 from ksem_transpiler.note import Note
 
