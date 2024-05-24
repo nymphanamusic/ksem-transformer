@@ -1,6 +1,5 @@
 from typing import Literal
 
-from pydantic import BaseModel
 from pydantic import BaseModel, ConfigDict, Field
 
 from ksem_transpiler.models.custom_bank import CustomBank
@@ -21,9 +20,9 @@ class Settings(BaseModel):
     Represents settings for an instrument or product configuration.
     """
 
-    comment_template: str | None = None
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
+    comment_template: str = ""
     colors: dict[str, str] | None = None
     middle_c: Literal["C3", "C4", "C5"] = "C3"
     pitch_range: PitchRange = PitchRange(
@@ -31,5 +30,5 @@ class Settings(BaseModel):
     )
     automation_key: NoteField = Note.from_str("C8")
 
-    midi_controls: MidiControls | None = None
-    custom_bank: CustomBank | None = None
+    midi_controls: MidiControls = Field(default_factory=MidiControls)
+    custom_bank: CustomBank = Field(default_factory=CustomBank)

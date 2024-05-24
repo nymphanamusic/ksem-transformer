@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Annotated, Any
 
 import attrs
 import yaml
@@ -110,14 +109,6 @@ class Root(BaseModel):
                 instrument.settings.model_dump(),
             )
         )
-        if settings.midi_controls is None:
-            raise ValueError(
-                "`midi_controls` must exist on a `settings` object in the " "hierarchy"
-            )
-        if settings.custom_bank is None:
-            raise ValueError(
-                "`custom_bank` must exist on a `settings` object in the " "hierarchy"
-            )
 
         with Note.with_middle_c(settings.middle_c):
             ksem_config: KsemConfig = {
