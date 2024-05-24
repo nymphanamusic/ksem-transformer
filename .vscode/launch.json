@@ -8,7 +8,7 @@
       "id": "module_name",
       "type": "promptString",
       "description": "Module to run",
-      "default": "ksem_transpiler.models.yaml_.root"
+      "default": "ksem_transpiler.models.root"
     }
   ],
   "configurations": [
