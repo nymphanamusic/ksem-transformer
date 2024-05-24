@@ -6,7 +6,7 @@ from typing import Annotated, Any
 
 import attrs
 import yaml
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, ValidationInfo
+from pydantic import BaseModel, ConfigDict, Field
 
 from ksem_transpiler.models.keyswitches import Keyswitches
 from ksem_transpiler.models.ksem_json_types import KsemConfig, KsemKeyswitchSettings
@@ -15,13 +15,6 @@ from ksem_transpiler.models.utils import combine_dicts
 from ksem_transpiler.note import Note
 
 KSEM_VERSION = "4.2"
-
-
-def note_validator(v: Any, info: ValidationInfo) -> Note:
-    return Note.from_str(v)
-
-
-NoteField = Annotated[Note, BeforeValidator(note_validator)]
 
 
 @attrs.define()
@@ -34,13 +27,6 @@ class KsemConfigFile:
     data: KsemConfig
 
 
-class PitchRange(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    low: NoteField
-    high: NoteField
-
-
 class Instrument(BaseModel):
     """
     Represents an instrument.
@@ -50,8 +36,6 @@ class Instrument(BaseModel):
 
     settings: Settings = Field(default_factory=Settings)
     keyswitches: Keyswitches
-    pitch_range: PitchRange
-    automation_key: NoteField = Note.from_str("C8")
 
 
 class InstrumentGroup(BaseModel):
@@ -177,9 +161,9 @@ class Root(BaseModel):
                 },
                 "piano": {
                     "showHidePiano": 1,
-                    "pitchLow": instrument.pitch_range.low.to_midi(),
-                    "pitchHigh": instrument.pitch_range.high.to_midi(),
-                    "automationKey": instrument.automation_key.to_midi(),
+                    "pitchLow": settings.pitch_range.low.to_midi(),
+                    "pitchHigh": settings.pitch_range.high.to_midi(),
+                    "automationKey": settings.automation_key.to_midi(),
                 },
                 "pad": {
                     "fontSize": [0, 0, 1],
