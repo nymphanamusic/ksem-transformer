@@ -3,7 +3,7 @@ from typing import Literal, cast
 
 from pydantic import BaseModel, Field
 
-from ksem_transpiler.models.ksem_json_types import KsemCustomBank
+from ksem_transformer.models.ksem_json_types import KsemCustomBank
 
 midi_control_to_ksem_custom_bank_selection = {
     "m01_modulation": 1,

@@ -2,7 +2,7 @@ from typing import Annotated, Any
 
 from pydantic import BeforeValidator, ValidationInfo
 
-from ksem_transpiler.note import Note
+from ksem_transformer.note import Note
 
 
 def note_validator(v: Any, info: ValidationInfo) -> Note:

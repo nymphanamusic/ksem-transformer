@@ -2,11 +2,11 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from ksem_transpiler.models.note_field import NoteField
-from ksem_transpiler.models.settings.custom_bank import CustomBank
-from ksem_transpiler.models.settings.midi_controls import MidiControls
-from ksem_transpiler.models.settings.xy_pad import XYPad
-from ksem_transpiler.note import Note
+from ksem_transformer.models.note_field import NoteField
+from ksem_transformer.models.settings.custom_bank import CustomBank
+from ksem_transformer.models.settings.midi_controls import MidiControls
+from ksem_transformer.models.settings.xy_pad import XYPad
+from ksem_transformer.note import Note
 
 
 class PitchRange(BaseModel):

@@ -1,6 +1,6 @@
 import pytest
 
-from ksem_transpiler.note import Note
+from ksem_transformer.note import Note
 
 
 class TestFromStr:

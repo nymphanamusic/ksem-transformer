@@ -3,7 +3,7 @@ from typing import Literal, cast
 
 from pydantic import BaseModel, Field
 
-from ksem_transpiler.models.ksem_json_types import KsemMidiControls
+from ksem_transformer.models.ksem_json_types import KsemMidiControls
 
 # Mapping of internal MIDI control names to KSEM control names
 midi_control_to_ksem = {

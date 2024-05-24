@@ -3,7 +3,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from ksem_transpiler.models.ksem_json_types import KsemXYFade
+from ksem_transformer.models.ksem_json_types import KsemXYFade
 
 AxisTarget = Literal[
     None,

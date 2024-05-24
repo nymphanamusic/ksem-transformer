@@ -7,11 +7,11 @@ import attrs
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
-from ksem_transpiler.models.keyswitches import Keyswitches
-from ksem_transpiler.models.ksem_json_types import KsemConfig, KsemKeyswitchSettings
-from ksem_transpiler.models.settings.settings import Settings
-from ksem_transpiler.models.utils import combine_dicts
-from ksem_transpiler.note import Note
+from ksem_transformer.models.keyswitches import Keyswitches
+from ksem_transformer.models.ksem_json_types import KsemConfig, KsemKeyswitchSettings
+from ksem_transformer.models.settings.settings import Settings
+from ksem_transformer.models.utils import combine_dicts
+from ksem_transformer.note import Note
 
 KSEM_VERSION = "4.2"
 
