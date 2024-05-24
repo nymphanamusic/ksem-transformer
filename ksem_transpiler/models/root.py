@@ -119,12 +119,7 @@ class Root(BaseModel):
                 "keySwitchSettings": self._make_keyswitch_settings(
                     instrument, instrument_name
                 ),
-                "xyFade": {
-                    "chooseXFade": 3,
-                    "chooseYFade": 13,
-                    "xyFadeShape": 0,
-                    "yOrientation": 0,
-                },
+                "xyFade": settings.xy_pad.to_ksem_config(),
                 "delaySettings": {
                     "usageRack": 0.0,
                     "filterMIDICtrl": 0.0,
