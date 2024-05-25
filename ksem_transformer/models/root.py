@@ -123,9 +123,8 @@ class Root(BaseModel):
                 "delaySettings": settings.delay.to_ksem_config(),
                 "automationSettings": settings.automation.to_ksem_config(),
                 "keySwitchManager": {
-                    "routerTrack": 1,
-                    "routerFilter": 0,
-                    "mpeSupportButton": 1,
+                    **settings.router.to_ksem_config(),
+                    "mpeSupportButton": int(settings.mpe_support),
                 },
                 "piano": {
                     "showHidePiano": 1,
