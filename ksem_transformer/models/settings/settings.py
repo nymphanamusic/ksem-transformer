@@ -3,6 +3,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from ksem_transformer.models.note_field import NoteField
+from ksem_transformer.models.settings.automation import Automation
 from ksem_transformer.models.settings.custom_bank import CustomBank
 from ksem_transformer.models.settings.delay import Delay
 from ksem_transformer.models.settings.midi_controls import MidiControls
@@ -36,3 +37,4 @@ class Settings(BaseModel):
     custom_bank: CustomBank = Field(default_factory=CustomBank)
     xy_pad: XYPad = Field(default_factory=XYPad)
     delay: Delay = Field(default_factory=Delay)
+    automation: Automation = Field(default_factory=Automation)

@@ -121,12 +121,7 @@ class Root(BaseModel):
                 ),
                 "xyFade": settings.xy_pad.to_ksem_config(),
                 "delaySettings": settings.delay.to_ksem_config(),
-                "automationSettings": {
-                    "automationKeySetting": 0,
-                    "ignoreRepeatedKey": 1,
-                    "autoTrigger": 0,
-                    "protectAutomation": 0,
-                },
+                "automationSettings": settings.automation.to_ksem_config(),
                 "keySwitchManager": {
                     "routerTrack": 1,
                     "routerFilter": 0,
