@@ -131,7 +131,7 @@ class Root(BaseModel):
                     "showHidePiano": 1,
                     "pitchLow": settings.pitch_range.low.to_midi(),
                     "pitchHigh": settings.pitch_range.high.to_midi(),
-                    "automationKey": settings.automation_key.to_midi(),
+                    "automationKey": settings.automation.automation_key.to_midi(),
                 },
                 "pad": {
                     "fontSize": [0, 0, 1],

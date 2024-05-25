@@ -31,7 +31,6 @@ class Settings(BaseModel):
     pitch_range: PitchRange = PitchRange(
         low=Note("C", -2, "C3"), high=Note("C", 8, "C3")
     )
-    automation_key: NoteField = Note.from_str("C7")
 
     midi_controls: MidiControls = Field(default_factory=MidiControls)
     custom_bank: CustomBank = Field(default_factory=CustomBank)
