@@ -132,13 +132,7 @@ class Root(BaseModel):
                     "pitchHigh": settings.pitch_range.high.to_midi(),
                     "automationKey": settings.automation.automation_key.to_midi(),
                 },
-                "pad": {
-                    "fontSize": [0, 0, 1],
-                    "justification": 0,
-                    "showKSNumbers": 1,
-                    "showKSNotes": 0,
-                    "fontSizeButton": 0,
-                },
+                "pad": settings.control_pad.to_ksem_config(),
                 "comments": (
                     settings.comment_template.format(
                         product=product_name,
