@@ -34,6 +34,7 @@ class Settings(BaseModel):
         low=Note("C", -2, "C3"), high=Note("C", 8, "C3")
     )
     mpe_support: bool = False
+    send_main_key: bool = True
 
     midi_controls: MidiControls = Field(default_factory=MidiControls)
     custom_bank: CustomBank = Field(default_factory=CustomBank)

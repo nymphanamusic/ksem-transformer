@@ -8,7 +8,7 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
 from ksem_transformer.models.keyswitches import Keyswitches
-from ksem_transformer.models.ksem_json_types import KsemConfig, KsemKeyswitchSettings
+from ksem_transformer.models.ksem_json_types import KsemConfig
 from ksem_transformer.models.settings.settings import Settings
 from ksem_transformer.models.utils import combine_dicts
 from ksem_transformer.note import Note
@@ -72,23 +72,21 @@ class Root(BaseModel):
             data = yaml.load(f, Loader=yaml.Loader)
         return Root.model_validate(data)
 
-    def _make_keyswitch_settings(
+    def _get_keyswitch_amount_option(
         self, instrument: Instrument, instrument_name: str
-    ) -> KsemKeyswitchSettings:
+    ) -> int:
         total_keyswitches = len(instrument.keyswitches.values)
         if total_keyswitches <= 16:
-            amount_option_index = 1
+            return 1
         elif total_keyswitches <= 32:
-            amount_option_index = 2
+            return 2
         elif total_keyswitches <= 64:
-            amount_option_index = 2
+            return 2
         else:
             raise ValueError(
                 f"Instrument {instrument_name} has more than 64 keyswitches "
                 f"({total_keyswitches})"
             )
-
-        return {"keySwitchAmount": amount_option_index, "sendMainKey": 1}
 
     def _make_ksem_config(
         self,
@@ -116,9 +114,12 @@ class Root(BaseModel):
                 "ks": instrument.keyswitches.to_ksem_config(settings),
                 "midiControls": settings.midi_controls.to_ksem_config(),
                 "customBank": settings.custom_bank.to_ksem_config(),
-                "keySwitchSettings": self._make_keyswitch_settings(
-                    instrument, instrument_name
-                ),
+                "keySwitchSettings": {
+                    "keySwitchAmount": self._get_keyswitch_amount_option(
+                        instrument, instrument_name
+                    ),
+                    "sendMainKey": int(settings.send_main_key),
+                },
                 "xyFade": settings.xy_pad.to_ksem_config(),
                 "delaySettings": settings.delay.to_ksem_config(),
                 "automationSettings": settings.automation.to_ksem_config(),
