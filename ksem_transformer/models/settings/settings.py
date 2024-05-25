@@ -4,6 +4,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from ksem_transformer.models.note_field import NoteField
 from ksem_transformer.models.settings.custom_bank import CustomBank
+from ksem_transformer.models.settings.delay import Delay
 from ksem_transformer.models.settings.midi_controls import MidiControls
 from ksem_transformer.models.settings.xy_pad import XYPad
 from ksem_transformer.note import Note
@@ -34,3 +35,4 @@ class Settings(BaseModel):
     midi_controls: MidiControls = Field(default_factory=MidiControls)
     custom_bank: CustomBank = Field(default_factory=CustomBank)
     xy_pad: XYPad = Field(default_factory=XYPad)
+    delay: Delay = Field(default_factory=Delay)

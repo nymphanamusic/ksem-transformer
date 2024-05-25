@@ -120,20 +120,7 @@ class Root(BaseModel):
                     instrument, instrument_name
                 ),
                 "xyFade": settings.xy_pad.to_ksem_config(),
-                "delaySettings": {
-                    "usageRack": 0.0,
-                    "filterMIDICtrl": 0.0,
-                    "bufferSize": 3.0,
-                    "delayCompensation": 0.0,
-                    "lock": 1.0,
-                    "delayBank": 0.0,
-                    "delaySub": 0.1,
-                    "delayPgm": 0.2,
-                    "delayCC": 0.3,
-                    "delayMainKey": 0.5,
-                    "delayAdditionalKey": 0.6,
-                    "delayMIDINote": 1.0,
-                },
+                "delaySettings": settings.delay.to_ksem_config(),
                 "automationSettings": {
                     "automationKeySetting": 0,
                     "ignoreRepeatedKey": 1,
