@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import Any
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from ksem_transformer.models.note_field import NoteField
@@ -44,3 +48,18 @@ class Settings(BaseModel):
 
     def is_default(self) -> bool:
         return self == Settings()
+
+    @classmethod
+    def combine(cls, *others: Settings) -> Settings:
+        default = Settings().model_dump()
+        out: dict[str, Any] = {}
+        for other in others:
+            other_dumped = other.model_dump()
+            for k, v in dict(other_dumped).items():
+                # Remove all fields that are default values so they don't overwrite previous things
+                if v == default[k]:
+                    del other_dumped[k]
+            out.update(other_dumped)
+        # Any field not set in any of the object will be populated by the Settings
+        # defaults
+        return Settings.model_validate(out)

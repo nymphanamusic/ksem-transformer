@@ -4,15 +4,17 @@ from __future__ import annotations
 import json
 from collections.abc import Generator
 from pathlib import Path
-from typing import Any, Protocol, cast
+from typing import Annotated, Any, Protocol, Self, cast
 
 import attrs
 from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    PlainValidator,
     SerializerFunctionWrapHandler,
     model_serializer,
+    model_validator,
 )
 from ruamel import yaml  # pyright: ignore[reportMissingTypeStubs]
 
@@ -20,7 +22,6 @@ from ksem_transformer.models.keyswitches import Keyswitches
 from ksem_transformer.models.ksem_json_types import KsemConfig
 from ksem_transformer.models.ksem_parsing import make_keyswitches
 from ksem_transformer.models.settings.settings import Settings
-from ksem_transformer.models.utils import combine_dicts
 from ksem_transformer.note import Note
 from ksem_transformer.utils.yaml_utils import yaml_dumps, yaml_load
 
@@ -29,14 +30,6 @@ KSEM_VERSION = "4.2"
 
 class HasSettings(Protocol):
     settings: Settings
-
-
-def _serialize_main_models(self: HasSettings, handler: SerializerFunctionWrapHandler):
-    with Note.with_middle_c(self.settings.middle_c):
-        partial_value = handler(self)
-    if self.settings.is_default():
-        del partial_value["settings"]
-    return partial_value
 
 
 @attrs.define()
@@ -49,50 +42,140 @@ class KsemConfigFile:
     data: KsemConfig
 
 
-class Instrument(BaseModel):
+class Container[T: "Container | None"](BaseModel):
+    parent: T | None = None
+    settings: Settings = Field(default_factory=Settings)
+
+    @model_serializer(mode="wrap")
+    def _serialize_main_models(
+        self: HasSettings, handler: SerializerFunctionWrapHandler
+    ):
+        with Note.with_middle_c(self.settings.middle_c):
+            partial_value = handler(self)
+        if self.settings.is_default():
+            del partial_value["settings"]
+        return partial_value
+
+    def get_merged_settings(self) -> Settings:
+        settings_ascending: list[Settings] = [self.settings]
+        obj = self
+        while hasattr(obj, "parent") and obj.parent is not None:
+            assert isinstance(obj, Container)
+            obj = obj.parent
+            settings_ascending.append(obj.settings)
+        return Settings.combine(*settings_ascending[::-1])
+
+
+class ChildProto[T](Protocol):
+    parent: T | None
+
+
+class ChildDict[K, V: ChildProto[Any], Parent](dict[K, V]):
+    _parent: Parent | None = None
+
+    @property
+    def parent(self) -> Parent | None:
+        return self._parent
+
+    @parent.setter
+    def parent(self, new_parent: Parent | None) -> None:
+        self._parent = new_parent
+        self._update_parents()
+
+    def _update_parents(self):
+        for v in self.values():
+            v.parent = self.parent
+
+    def __attrs_post_init__(self):
+        self._update_parents()
+
+    def __setitem__(self, key: K, value: V) -> None:
+        value.parent = self.parent
+        super().__setitem__(key, value)
+
+
+class Instrument(Container["InstrumentGroup"], BaseModel):
     """
     Represents an instrument.
     """
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    settings: Settings = Field(default_factory=Settings)
     keyswitches: Keyswitches
 
-    _serialize_model = model_serializer(mode="wrap")(_serialize_main_models)
 
-
-class InstrumentGroup(BaseModel):
+class InstrumentGroup(Container["Product"], BaseModel):
     """
     Represents a group of instruments.
     """
 
-    settings: Settings = Field(default_factory=Settings)
-    instruments: dict[str, Instrument]
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    _serialize_model = model_serializer(mode="wrap")(_serialize_main_models)
+    instruments: Annotated[
+        dict[str, Instrument],
+        PlainValidator(
+            lambda x: (
+                ChildDict(x)
+                if not isinstance(x, ChildDict)
+                else cast(ChildDict[str, Instrument, InstrumentGroup], x)
+            )
+        ),
+    ]
+
+    @model_validator(mode="after")
+    def set_parent(self) -> Self:
+        cast(ChildDict[str, Instrument, InstrumentGroup], self.instruments).parent = (
+            self
+        )
+        return self
 
 
-class Product(BaseModel):
+class Product(Container["Root"], BaseModel):
     """
     Represents a product.
     """
 
-    settings: Settings = Field(default_factory=Settings)
-    instrument_groups: dict[str, InstrumentGroup]
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    _serialize_model = model_serializer(mode="wrap")(_serialize_main_models)
+    instrument_groups: Annotated[
+        dict[str, InstrumentGroup],
+        PlainValidator(
+            lambda x: (
+                ChildDict(x)
+                if not isinstance(x, ChildDict)
+                else cast(ChildDict[str, InstrumentGroup, Product], x)
+            )
+        ),
+    ]
+
+    @model_validator(mode="after")
+    def set_parent(self) -> Self:
+        cast(
+            ChildDict[str, InstrumentGroup, Product], self.instrument_groups
+        ).parent = self
+        return self
 
 
-class Root(BaseModel):
+class Root(Container[None], BaseModel):
     """
     Represents the root configuration.
     """
 
-    settings: Settings = Field(default_factory=Settings)
-    products: dict[str, Product]
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    _serialize_model = model_serializer(mode="wrap")(_serialize_main_models)
+    products: Annotated[
+        dict[str, Product],
+        PlainValidator(
+            lambda x: (
+                ChildDict(x)
+                if not isinstance(x, ChildDict)
+                else cast(ChildDict[str, Product, Root], x)
+            )
+        ),
+    ]
+
+    @model_validator(mode="after")
+    def set_parent(self) -> Self:
+        cast(ChildDict[str, Product, Root], self.products).parent = self
+        return self
 
     @classmethod
     def from_file(cls, file: Path) -> Root:
@@ -198,21 +281,12 @@ class Root(BaseModel):
         self,
         *,
         product_name: str,
-        product: Product,
         group_name: str,
-        group: InstrumentGroup,
         instrument_name: str,
         instrument: Instrument,
     ):
         file = Path(product_name, group_name, f"{instrument_name}.json")
-        settings = Settings.model_validate(
-            combine_dicts(
-                self.settings.model_dump(),
-                product.settings.model_dump(),
-                group.settings.model_dump(),
-                instrument.settings.model_dump(),
-            )
-        )
+        settings = instrument.get_merged_settings()
 
         with Note.with_middle_c(settings.middle_c):
             ksem_config: KsemConfig = {
@@ -274,9 +348,7 @@ class Root(BaseModel):
                     out.append(
                         self._make_ksem_config(
                             product_name=product_name,
-                            product=product,
                             group_name=group_name,
-                            group=group,
                             instrument_name=instrument_name,
                             instrument=instrument,
                         )
