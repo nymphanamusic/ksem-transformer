@@ -122,6 +122,9 @@ class Note:
                 pass
         return NotImplemented
 
+    def __str__(self) -> str:
+        return f"{self.note}{self.octave}"
+
     @classmethod
     @contextmanager
     def with_middle_c(cls, middle_c: MiddleCLiteral):
