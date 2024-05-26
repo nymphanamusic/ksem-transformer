@@ -41,3 +41,6 @@ class Settings(BaseModel):
     automation: Automation = Field(default_factory=Automation)
     router: Router = Field(default_factory=Router)
     control_pad: ControlPad = Field(default_factory=ControlPad)
+
+    def is_default(self) -> bool:
+        return self == Settings()

@@ -7,7 +7,13 @@ from pathlib import Path
 from typing import Any, Protocol, cast
 
 import attrs
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    SerializerFunctionWrapHandler,
+    model_serializer,
+)
 from ruamel import yaml  # pyright: ignore[reportMissingTypeStubs]
 
 from ksem_transformer.models.keyswitches import Keyswitches
@@ -19,6 +25,18 @@ from ksem_transformer.note import Note
 from ksem_transformer.utils.yaml_utils import yaml_dumps, yaml_load
 
 KSEM_VERSION = "4.2"
+
+
+class HasSettings(Protocol):
+    settings: Settings
+
+
+def _serialize_main_models(self: HasSettings, handler: SerializerFunctionWrapHandler):
+    with Note.with_middle_c(self.settings.middle_c):
+        partial_value = handler(self)
+    if self.settings.is_default():
+        del partial_value["settings"]
+    return partial_value
 
 
 @attrs.define()
@@ -41,10 +59,7 @@ class Instrument(BaseModel):
     settings: Settings = Field(default_factory=Settings)
     keyswitches: Keyswitches
 
-    @model_serializer(mode="wrap")
-    def _serialize_model(self, handler: SerializerFunctionWrapHandler):
-        with Note.with_middle_c(self.settings.middle_c):
-            return handler(self)
+    _serialize_model = model_serializer(mode="wrap")(_serialize_main_models)
 
 
 class InstrumentGroup(BaseModel):
@@ -55,10 +70,7 @@ class InstrumentGroup(BaseModel):
     settings: Settings = Field(default_factory=Settings)
     instruments: dict[str, Instrument]
 
-    @model_serializer(mode="wrap")
-    def _serialize_model(self, handler: SerializerFunctionWrapHandler):
-        with Note.with_middle_c(self.settings.middle_c):
-            return handler(self)
+    _serialize_model = model_serializer(mode="wrap")(_serialize_main_models)
 
 
 class Product(BaseModel):
@@ -69,10 +81,7 @@ class Product(BaseModel):
     settings: Settings = Field(default_factory=Settings)
     instrument_groups: dict[str, InstrumentGroup]
 
-    @model_serializer(mode="wrap")
-    def _serialize_model(self, handler: SerializerFunctionWrapHandler):
-        with Note.with_middle_c(self.settings.middle_c):
-            return handler(self)
+    _serialize_model = model_serializer(mode="wrap")(_serialize_main_models)
 
 
 class Root(BaseModel):
@@ -83,10 +92,7 @@ class Root(BaseModel):
     settings: Settings = Field(default_factory=Settings)
     products: dict[str, Product]
 
-    @model_serializer(mode="wrap")
-    def _serialize_model(self, handler: SerializerFunctionWrapHandler):
-        with Note.with_middle_c(self.settings.middle_c):
-            return handler(self)
+    _serialize_model = model_serializer(mode="wrap")(_serialize_main_models)
 
     @classmethod
     def from_file(cls, file: Path) -> Root:
