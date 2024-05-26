@@ -128,9 +128,10 @@ class Note:
     @classmethod
     @contextmanager
     def with_middle_c(cls, middle_c: MiddleCLiteral):
+        prev_middle_c = cls._cls_middle_c
         cls._cls_middle_c = middle_c
         yield
-        cls._cls_middle_c = None
+        cls._cls_middle_c = prev_middle_c
 
     @classmethod
     def from_str(cls, value: str, middle_c: MiddleCLiteral | None = None) -> Note:
