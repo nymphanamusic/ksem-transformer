@@ -72,6 +72,9 @@ class Root(BaseModel):
             data = yaml.load(f, Loader=yaml.Loader)
         return Root.model_validate(data)
 
+    def to_yaml(self) -> str:
+        return yaml.dump(self.model_dump(), Dumper=yaml.Dumper)
+
     def _get_keyswitch_amount_option(
         self, instrument: Instrument, instrument_name: str
     ) -> int:
