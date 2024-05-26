@@ -28,7 +28,7 @@ class Settings(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     comment_template: str = ""
-    colors: dict[str, str] | None = None
+    colors: dict[str, str] = Field(default_factory=dict)
     middle_c: Literal["C3", "C4", "C5"] = "C3"
     pitch_range: PitchRange = PitchRange(
         low=Note("C", -2, "C3"), high=Note("C", 8, "C3")
