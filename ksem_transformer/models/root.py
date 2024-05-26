@@ -1,17 +1,22 @@
+# pyright: reportUnknownMemberType=none, reportUnknownVariableType=none
 from __future__ import annotations
 
 import json
+from collections.abc import Generator
 from pathlib import Path
+from typing import Any, Protocol, cast
 
 import attrs
-import yaml
 from pydantic import BaseModel, ConfigDict, Field
+from ruamel import yaml  # pyright: ignore[reportMissingTypeStubs]
 
 from ksem_transformer.models.keyswitches import Keyswitches
 from ksem_transformer.models.ksem_json_types import KsemConfig
+from ksem_transformer.models.ksem_parsing import make_keyswitches
 from ksem_transformer.models.settings.settings import Settings
 from ksem_transformer.models.utils import combine_dicts
 from ksem_transformer.note import Note
+from ksem_transformer.utils.yaml_utils import yaml_dumps, yaml_load
 
 KSEM_VERSION = "4.2"
 
@@ -92,8 +97,80 @@ class Root(BaseModel):
             data = yaml.load(f, Loader=yaml.Loader)
         return Root.model_validate(data)
 
-    def to_yaml(self) -> str:
-        return yaml.dump(self.model_dump(), Dumper=yaml.Dumper)
+    @classmethod
+    def from_ksem_config(
+        cls,
+        config_path: Path,
+        product_name: str = "Unknown product",
+        instrument_group_name: str = "Unknown instrument group",
+        instrument_name: str = "Unknown instrument",
+    ) -> Root:
+        config = cast(KsemConfig, json.loads(config_path.read_text()))
+
+        settings = Settings()
+
+        instrument = Instrument(keyswitches=make_keyswitches(config, settings))
+
+        return Root(
+            settings=settings,
+            products={
+                product_name: Product(
+                    instrument_groups={
+                        instrument_group_name: InstrumentGroup(
+                            instruments={instrument_name: instrument}
+                        )
+                    }
+                )
+            },
+        )
+
+    def to_yaml(
+        self, compact_settings: bool = True, compact_keyswitch_values: bool = True
+    ) -> str:
+        data = yaml_load(self.model_dump())
+
+        def _iter_settings() -> Generator[Any, None, None]:
+            if "settings" in data:
+                yield data["settings"]
+
+            for product in data["products"].values():
+                if "settings" in product:
+                    yield product["settings"]
+
+                for group in product["instrument_groups"].values():
+                    if "settings" in group:
+                        yield group["settings"]
+
+                    for instrument in group["instruments"].values():
+                        if "settings" in instrument:
+                            yield instrument["settings"]
+
+        def _set_flow_style(obj: Any) -> None:
+            if hasattr(obj, "fa"):
+                obj.fa.set_flow_style()
+
+        if compact_settings:
+            for settings in _iter_settings():
+                if settings is None:
+                    continue
+                for field in list(settings["midi_controls"].values()) + list(
+                    settings["custom_bank"].values()
+                ):
+                    _set_flow_style(field)
+
+        if compact_keyswitch_values:
+            # Set flow style for concise keyswitch fields
+            for keyswitches in (
+                cast(Any, instrument["keyswitches"])
+                for product in data["products"].values()
+                for group in product["instrument_groups"].values()
+                for instrument in group["instruments"].values()
+            ):
+                keyswitches["mapping"].fa.set_flow_style()
+                for value in keyswitches["values"]:
+                    _set_flow_style(value)
+
+        return yaml_dumps(data)
 
     def _get_keyswitch_amount_option(
         self, instrument: Instrument, instrument_name: str
