@@ -36,6 +36,11 @@ class Instrument(BaseModel):
     settings: Settings = Field(default_factory=Settings)
     keyswitches: Keyswitches
 
+    @model_serializer(mode="wrap")
+    def _serialize_model(self, handler: SerializerFunctionWrapHandler):
+        with Note.with_middle_c(self.settings.middle_c):
+            return handler(self)
+
 
 class InstrumentGroup(BaseModel):
     """
@@ -44,6 +49,11 @@ class InstrumentGroup(BaseModel):
 
     settings: Settings = Field(default_factory=Settings)
     instruments: dict[str, Instrument]
+
+    @model_serializer(mode="wrap")
+    def _serialize_model(self, handler: SerializerFunctionWrapHandler):
+        with Note.with_middle_c(self.settings.middle_c):
+            return handler(self)
 
 
 class Product(BaseModel):
@@ -54,6 +64,11 @@ class Product(BaseModel):
     settings: Settings = Field(default_factory=Settings)
     instrument_groups: dict[str, InstrumentGroup]
 
+    @model_serializer(mode="wrap")
+    def _serialize_model(self, handler: SerializerFunctionWrapHandler):
+        with Note.with_middle_c(self.settings.middle_c):
+            return handler(self)
+
 
 class Root(BaseModel):
     """
@@ -62,6 +77,11 @@ class Root(BaseModel):
 
     settings: Settings = Field(default_factory=Settings)
     products: dict[str, Product]
+
+    @model_serializer(mode="wrap")
+    def _serialize_model(self, handler: SerializerFunctionWrapHandler):
+        with Note.with_middle_c(self.settings.middle_c):
+            return handler(self)
 
     @classmethod
     def from_file(cls, file: Path) -> Root:

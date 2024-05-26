@@ -1,5 +1,3 @@
-from typing import Literal
-
 from pydantic import BaseModel, ConfigDict, Field
 
 from ksem_transformer.models.note_field import NoteField
@@ -10,7 +8,7 @@ from ksem_transformer.models.settings.delay import Delay
 from ksem_transformer.models.settings.midi_controls import MidiControls
 from ksem_transformer.models.settings.router import Router
 from ksem_transformer.models.settings.xy_pad import XYPad
-from ksem_transformer.note import Note
+from ksem_transformer.note import MiddleCLiteral, Note
 
 
 class PitchRange(BaseModel):
@@ -29,7 +27,7 @@ class Settings(BaseModel):
 
     comment_template: str = ""
     colors: dict[str, str] = Field(default_factory=dict)
-    middle_c: Literal["C3", "C4", "C5"] = "C3"
+    middle_c: MiddleCLiteral = "C3"
     pitch_range: PitchRange = PitchRange(
         low=Note("C", -2, "C3"), high=Note("C", 8, "C3")
     )
