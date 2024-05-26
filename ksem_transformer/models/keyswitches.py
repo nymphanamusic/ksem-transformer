@@ -5,6 +5,7 @@ from bidict import bidict
 from pydantic import BaseModel, ConfigDict, Field
 
 from ksem_transformer.models.ksem_json_types import EMPTY_VALUE, KsemKeyswitchesEntry
+from ksem_transformer.models.note_field import NoteField
 from ksem_transformer.models.settings.settings import Settings
 from ksem_transformer.note import Note, NoteLiteral
 
@@ -56,7 +57,7 @@ class Keyswitches(BaseModel):
 
     root_octaves: KeyswitchesRootOctaves = Field(default_factory=KeyswitchesRootOctaves)
     mapping: list[KeyswitchField]
-    values: list[list[Note | str | int]]
+    values: list[list[NoteField | str | int]]
 
     def to_ksem_config(self, settings: Settings) -> dict[str, KsemKeyswitchesEntry]:
         """
