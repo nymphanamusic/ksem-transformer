@@ -100,3 +100,9 @@ class TestNaiveNotes:
             pass
         with pytest.raises(TypeError):
             Note("C", 2, middle_c=None).to_midi()
+
+    def test_nesting_recovers_previous_contexts_value(self):
+        with Note.with_middle_c("C4"):
+            with Note.with_middle_c("C5"):
+                assert Note("C", 0).to_midi() == 0
+            assert Note("C", -1).to_midi() == 0

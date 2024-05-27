@@ -100,7 +100,7 @@ def _validate_octave_raw(value: int, middle_c: MiddleCLiteral) -> None:
         )
 
 
-@attrs.define()
+@attrs.define(hash=True)
 class Note:
     _cls_middle_c: ClassVar[MiddleCLiteral | None] = None
 
@@ -122,12 +122,22 @@ class Note:
                 pass
         return NotImplemented
 
+    def __str__(self) -> str:
+        return f"{self.note}{self.octave}"
+
+    def __gt__(self, other: Note) -> bool:
+        return self.to_midi() > other.to_midi()
+
+    def __lt__(self, other: Note) -> bool:
+        return self.to_midi() < other.to_midi()
+
     @classmethod
     @contextmanager
     def with_middle_c(cls, middle_c: MiddleCLiteral):
+        prev_middle_c = cls._cls_middle_c
         cls._cls_middle_c = middle_c
         yield
-        cls._cls_middle_c = None
+        cls._cls_middle_c = prev_middle_c
 
     @classmethod
     def from_str(cls, value: str, middle_c: MiddleCLiteral | None = None) -> Note:

@@ -1,4 +1,6 @@
-from typing import Literal
+from __future__ import annotations
+
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -10,7 +12,7 @@ from ksem_transformer.models.settings.delay import Delay
 from ksem_transformer.models.settings.midi_controls import MidiControls
 from ksem_transformer.models.settings.router import Router
 from ksem_transformer.models.settings.xy_pad import XYPad
-from ksem_transformer.note import Note
+from ksem_transformer.note import MiddleCLiteral, Note
 
 
 class PitchRange(BaseModel):
@@ -28,8 +30,8 @@ class Settings(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     comment_template: str = ""
-    colors: dict[str, str] | None = None
-    middle_c: Literal["C3", "C4", "C5"] = "C3"
+    colors: dict[str, str] = Field(default_factory=dict)
+    middle_c: MiddleCLiteral = "C3"
     pitch_range: PitchRange = PitchRange(
         low=Note("C", -2, "C3"), high=Note("C", 8, "C3")
     )
@@ -43,3 +45,21 @@ class Settings(BaseModel):
     automation: Automation = Field(default_factory=Automation)
     router: Router = Field(default_factory=Router)
     control_pad: ControlPad = Field(default_factory=ControlPad)
+
+    def is_default(self) -> bool:
+        return self == Settings()
+
+    @classmethod
+    def combine(cls, *others: Settings) -> Settings:
+        default = Settings().model_dump()
+        out: dict[str, Any] = {}
+        for other in others:
+            other_dumped = other.model_dump()
+            for k, v in dict(other_dumped).items():
+                # Remove all fields that are default values so they don't overwrite previous things
+                if v == default[k]:
+                    del other_dumped[k]
+            out.update(other_dumped)
+        # Any field not set in any of the object will be populated by the Settings
+        # defaults
+        return Settings.model_validate(out)

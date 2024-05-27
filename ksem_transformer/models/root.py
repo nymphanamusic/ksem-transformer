@@ -1,19 +1,35 @@
+# pyright: reportUnknownMemberType=none, reportUnknownVariableType=none
 from __future__ import annotations
 
 import json
+from collections.abc import Generator
 from pathlib import Path
+from typing import Annotated, Any, Protocol, Self, cast
 
 import attrs
-import yaml
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    PlainValidator,
+    SerializerFunctionWrapHandler,
+    model_serializer,
+    model_validator,
+)
+from ruamel import yaml  # pyright: ignore[reportMissingTypeStubs]
 
 from ksem_transformer.models.keyswitches import Keyswitches
 from ksem_transformer.models.ksem_json_types import KsemConfig
+from ksem_transformer.models.ksem_parsing import make_keyswitches
 from ksem_transformer.models.settings.settings import Settings
-from ksem_transformer.models.utils import combine_dicts
 from ksem_transformer.note import Note
+from ksem_transformer.utils.yaml_utils import yaml_dumps, yaml_load
 
 KSEM_VERSION = "4.2"
+
+
+class HasSettings(Protocol):
+    settings: Settings
 
 
 @attrs.define()
@@ -26,42 +42,140 @@ class KsemConfigFile:
     data: KsemConfig
 
 
-class Instrument(BaseModel):
+class Container[T: "Container | None"](BaseModel):
+    parent: T | None = Field(default=None, exclude=True)
+    settings: Settings = Field(default_factory=Settings)
+
+    @model_serializer(mode="wrap")
+    def _serialize_main_models(
+        self: HasSettings, handler: SerializerFunctionWrapHandler
+    ):
+        with Note.with_middle_c(self.settings.middle_c):
+            partial_value = handler(self)
+        if self.settings.is_default():
+            del partial_value["settings"]
+        return partial_value
+
+    def get_merged_settings(self) -> Settings:
+        settings_ascending: list[Settings] = [self.settings]
+        obj = self
+        while hasattr(obj, "parent") and obj.parent is not None:
+            assert isinstance(obj, Container)
+            obj = obj.parent
+            settings_ascending.append(obj.settings)
+        return Settings.combine(*settings_ascending[::-1])
+
+
+class ChildProto[T](Protocol):
+    parent: T | None
+
+
+class ChildDict[K, V: ChildProto[Any], Parent](dict[K, V]):
+    _parent: Parent | None = None
+
+    @property
+    def parent(self) -> Parent | None:
+        return self._parent
+
+    @parent.setter
+    def parent(self, new_parent: Parent | None) -> None:
+        self._parent = new_parent
+        self._update_parents()
+
+    def _update_parents(self):
+        for v in self.values():
+            v.parent = self.parent
+
+    def __attrs_post_init__(self):
+        self._update_parents()
+
+    def __setitem__(self, key: K, value: V) -> None:
+        value.parent = self.parent
+        super().__setitem__(key, value)
+
+
+class Instrument(Container["InstrumentGroup"], BaseModel):
     """
     Represents an instrument.
     """
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    settings: Settings = Field(default_factory=Settings)
     keyswitches: Keyswitches
 
 
-class InstrumentGroup(BaseModel):
+class InstrumentGroup(Container["Product"], BaseModel):
     """
     Represents a group of instruments.
     """
 
-    settings: Settings = Field(default_factory=Settings)
-    instruments: dict[str, Instrument]
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    instruments: Annotated[
+        dict[str, Instrument],
+        PlainValidator(
+            lambda x: (
+                ChildDict(x)
+                if not isinstance(x, ChildDict)
+                else cast(ChildDict[str, Instrument, InstrumentGroup], x)
+            )
+        ),
+    ]
+
+    @model_validator(mode="after")
+    def set_parent(self) -> Self:
+        cast(ChildDict[str, Instrument, InstrumentGroup], self.instruments).parent = (
+            self
+        )
+        return self
 
 
-class Product(BaseModel):
+class Product(Container["Root"], BaseModel):
     """
     Represents a product.
     """
 
-    settings: Settings = Field(default_factory=Settings)
-    instrument_groups: dict[str, InstrumentGroup]
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    instrument_groups: Annotated[
+        dict[str, InstrumentGroup],
+        PlainValidator(
+            lambda x: (
+                ChildDict(x)
+                if not isinstance(x, ChildDict)
+                else cast(ChildDict[str, InstrumentGroup, Product], x)
+            )
+        ),
+    ]
+
+    @model_validator(mode="after")
+    def set_parent(self) -> Self:
+        cast(
+            ChildDict[str, InstrumentGroup, Product], self.instrument_groups
+        ).parent = self
+        return self
 
 
-class Root(BaseModel):
+class Root(Container[None], BaseModel):
     """
     Represents the root configuration.
     """
 
-    settings: Settings = Field(default_factory=Settings)
-    products: dict[str, Product]
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    products: Annotated[
+        dict[str, Product],
+        PlainValidator(
+            lambda x: (
+                ChildDict(x)
+                if not isinstance(x, ChildDict)
+                else cast(ChildDict[str, Product, Root], x)
+            )
+        ),
+    ]
+
+    @model_validator(mode="after")
+    def set_parent(self) -> Self:
+        cast(ChildDict[str, Product, Root], self.products).parent = self
+        return self
 
     @classmethod
     def from_file(cls, file: Path) -> Root:
@@ -71,6 +185,81 @@ class Root(BaseModel):
         with file.open() as f:
             data = yaml.load(f, Loader=yaml.Loader)
         return Root.model_validate(data)
+
+    @classmethod
+    def from_ksem_config(
+        cls,
+        config_path: Path,
+        product_name: str = "Unknown product",
+        instrument_group_name: str = "Unknown instrument group",
+        instrument_name: str = "Unknown instrument",
+    ) -> Root:
+        config = cast(KsemConfig, json.loads(config_path.read_text()))
+
+        settings = Settings()
+
+        instrument = Instrument(keyswitches=make_keyswitches(config, settings))
+
+        return Root(
+            settings=settings,
+            products={
+                product_name: Product(
+                    instrument_groups={
+                        instrument_group_name: InstrumentGroup(
+                            instruments={instrument_name: instrument}
+                        )
+                    }
+                )
+            },
+        )
+
+    def to_yaml(
+        self, compact_settings: bool = True, compact_keyswitch_values: bool = True
+    ) -> str:
+        data = yaml_load(self.model_dump())
+
+        def _iter_settings() -> Generator[Any, None, None]:
+            if "settings" in data:
+                yield data["settings"]
+
+            for product in data["products"].values():
+                if "settings" in product:
+                    yield product["settings"]
+
+                for group in product["instrument_groups"].values():
+                    if "settings" in group:
+                        yield group["settings"]
+
+                    for instrument in group["instruments"].values():
+                        if "settings" in instrument:
+                            yield instrument["settings"]
+
+        def _set_flow_style(obj: Any) -> None:
+            if hasattr(obj, "fa"):
+                obj.fa.set_flow_style()
+
+        if compact_settings:
+            for settings in _iter_settings():
+                if settings is None:
+                    continue
+                for field in list(settings["midi_controls"].values()) + list(
+                    settings["custom_bank"].values()
+                ):
+                    _set_flow_style(field)
+
+        if compact_keyswitch_values:
+            # Set flow style for concise keyswitch fields
+            for keyswitches in (
+                cast(Any, instrument["keyswitches"])
+                for product in data["products"].values()
+                for group in product["instrument_groups"].values()
+                for instrument in group["instruments"].values()
+            ):
+                keyswitches["mapping"].fa.set_flow_style()
+                for value in keyswitches["values"]:
+                    _set_flow_style(value)
+
+        return yaml_dumps(data)
 
     def _get_keyswitch_amount_option(
         self, instrument: Instrument, instrument_name: str
@@ -92,21 +281,12 @@ class Root(BaseModel):
         self,
         *,
         product_name: str,
-        product: Product,
         group_name: str,
-        group: InstrumentGroup,
         instrument_name: str,
         instrument: Instrument,
     ):
         file = Path(product_name, group_name, f"{instrument_name}.json")
-        settings = Settings.model_validate(
-            combine_dicts(
-                self.settings.model_dump(),
-                product.settings.model_dump(),
-                group.settings.model_dump(),
-                instrument.settings.model_dump(),
-            )
-        )
+        settings = instrument.get_merged_settings()
 
         with Note.with_middle_c(settings.middle_c):
             ksem_config: KsemConfig = {
@@ -168,9 +348,7 @@ class Root(BaseModel):
                     out.append(
                         self._make_ksem_config(
                             product_name=product_name,
-                            product=product,
                             group_name=group_name,
-                            group=group,
                             instrument_name=instrument_name,
                             instrument=instrument,
                         )

@@ -1,9 +1,11 @@
 # Mapping of keyswitch fields to KSEM keys
 from typing import Literal, cast
 
+from bidict import bidict
 from pydantic import BaseModel, ConfigDict, Field
 
 from ksem_transformer.models.ksem_json_types import EMPTY_VALUE, KsemKeyswitchesEntry
+from ksem_transformer.models.note_field import NoteField
 from ksem_transformer.models.settings.settings import Settings
 from ksem_transformer.note import Note, NoteLiteral
 
@@ -21,18 +23,20 @@ type KeyswitchField = Literal[
 ]
 
 
-keyswitch_field_to_ksem_key = {
-    "name": "name",
-    "key": "key",
-    "second_key": "+key",
-    "bank": "bnk",
-    "sub": "sub",
-    "program": "pgm",
-    "cc_n": "ccn",
-    "cc_v": "ccv",
-    "chain": "chn",
-    "color": "color",
-}
+keyswitch_field_to_ksem_key = bidict(
+    {
+        "name": "name",
+        "key": "key",
+        "second_key": "+key",
+        "bank": "bnk",
+        "sub": "sub",
+        "program": "pgm",
+        "cc_n": "ccn",
+        "cc_v": "ccv",
+        "chain": "chn",
+        "color": "color",
+    }
+)
 
 
 class KeyswitchesRootOctaves(BaseModel):
@@ -53,7 +57,7 @@ class Keyswitches(BaseModel):
 
     root_octaves: KeyswitchesRootOctaves = Field(default_factory=KeyswitchesRootOctaves)
     mapping: list[KeyswitchField]
-    values: list[list[Note | str | int]]
+    values: list[list[NoteField | str | int]]
 
     def to_ksem_config(self, settings: Settings) -> dict[str, KsemKeyswitchesEntry]:
         """
