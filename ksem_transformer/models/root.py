@@ -43,7 +43,7 @@ class KsemConfigFile:
 
 
 class Container[T: "Container | None"](BaseModel):
-    parent: T | None = None
+    parent: T | None = Field(default=None, exclude=True)
     settings: Settings = Field(default_factory=Settings)
 
     @model_serializer(mode="wrap")
