@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "ksem-transpiler"
+name = "ksem-transformer"
 version = "0.1.0"
-description = ""
+description = "A program that transforms YAML files into Ableton Keyswitch & Expression Map config files."
 authors = ["Nymphana <hi@nymphana.com>"]
 license = "MIT"
 readme = "README.md"
