@@ -24,6 +24,9 @@ ruff = "^0.4.5"
 pre-commit = "^3.7.1"
 pyright = "^1.1.364"
 
+[tool.poetry.scripts]
+ksem-transformer = "ksem_transformer.__main__:main"
+
 [tool.black]
 skip-magic-trailing-comma = true
 
