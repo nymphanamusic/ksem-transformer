@@ -34,7 +34,7 @@ midi_control_to_ksem = {
 }
 
 # Available MIDI CC KSEM options
-CustomOptions = Literal[
+type CustomOptions = Literal[
     0,
     3,
     6,
@@ -141,7 +141,7 @@ CustomOptions = Literal[
     119,
 ]
 
-custom_options = [None, *typing.get_args(CustomOptions)]
+custom_options = [None, *typing.get_args(CustomOptions.__value__)]
 
 
 class MidiControl(BaseModel):

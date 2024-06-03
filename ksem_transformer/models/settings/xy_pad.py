@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from ksem_transformer.models.ksem_json_types import KsemXYFade
 
-AxisTarget = Literal[
+type AxisTarget = Literal[
     None,
     "velocity",
     0,
@@ -129,7 +129,7 @@ AxisTarget = Literal[
     118,
     119,
 ]
-PadShape = Literal["filled_rectangle", "line"]
+type PadShape = Literal["filled_rectangle", "line"]
 
 
 class XYPad(BaseModel):
@@ -138,8 +138,8 @@ class XYPad(BaseModel):
     pad_shape: PadShape = "filled_rectangle"
 
     def to_ksem_config(self) -> KsemXYFade:
-        axis_target_options = typing.get_args(AxisTarget)
-        pad_shape_options = typing.get_args(PadShape)
+        axis_target_options = typing.get_args(AxisTarget.__value__)
+        pad_shape_options = typing.get_args(PadShape.__value__)
         return {
             "chooseXFade": axis_target_options.index(self.x_axis_target),
             "chooseYFade": axis_target_options.index(self.y_axis_target),

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Literal, TypedDict
 
 EMPTY_VALUE = "-"
-EmptyValue = Literal["-"]
+type EmptyValue = Literal["-"]
 
 KsemKeyswitchesEntry = TypedDict(
     "KsemKeyswitchesEntry",
