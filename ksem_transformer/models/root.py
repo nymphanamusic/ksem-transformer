@@ -8,10 +8,10 @@ from typing import Annotated, Any, Protocol, Self, cast
 
 import attrs
 from pydantic import (
+    AfterValidator,
     BaseModel,
     ConfigDict,
     Field,
-    PlainValidator,
     SerializerFunctionWrapHandler,
     model_serializer,
     model_validator,
@@ -111,7 +111,7 @@ class InstrumentGroup(Container["Product"], BaseModel):
 
     instruments: Annotated[
         dict[str, Instrument],
-        PlainValidator(
+        AfterValidator(
             lambda x: (
                 ChildDict(x)
                 if not isinstance(x, ChildDict)
@@ -137,7 +137,7 @@ class Product(Container["Root"], BaseModel):
 
     instrument_groups: Annotated[
         dict[str, InstrumentGroup],
-        PlainValidator(
+        AfterValidator(
             lambda x: (
                 ChildDict(x)
                 if not isinstance(x, ChildDict)
@@ -163,7 +163,7 @@ class Root(Container[None], BaseModel):
 
     products: Annotated[
         dict[str, Product],
-        PlainValidator(
+        AfterValidator(
             lambda x: (
                 ChildDict(x)
                 if not isinstance(x, ChildDict)
