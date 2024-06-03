@@ -16,7 +16,7 @@ from pydantic import (
     model_serializer,
     model_validator,
 )
-from ruamel import yaml  # pyright: ignore[reportMissingTypeStubs]
+from ruamel.yaml import YAML as Yaml  # pyright: ignore[reportMissingTypeStubs]
 
 from ksem_transformer.models.keyswitches import Keyswitches
 from ksem_transformer.models.ksem_json_types import KsemConfig
@@ -182,8 +182,9 @@ class Root(Container[None], BaseModel):
         """
         Loads a Root configuration from a YAML file.
         """
+        yaml = Yaml(typ="safe")
         with file.open() as f:
-            data = yaml.load(f, Loader=yaml.Loader)
+            data = yaml.load(f)
         return Root.model_validate(data)
 
     @classmethod
