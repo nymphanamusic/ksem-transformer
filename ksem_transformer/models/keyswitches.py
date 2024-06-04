@@ -8,6 +8,7 @@ from ksem_transformer.models.ksem_json_types import EMPTY_VALUE, KsemKeyswitches
 from ksem_transformer.models.note_field import NoteField
 from ksem_transformer.models.settings.settings import Settings
 from ksem_transformer.note import Note, NoteLiteral
+from ksem_transformer.utils.color import hex_color_to_tuple
 
 type KeyswitchField = Literal[
     "name",
@@ -90,6 +91,7 @@ class Keyswitches(BaseModel):
 
             for value_idx, value in enumerate(row):
                 ksem_key = keyswitch_field_to_ksem_key[self.mapping[value_idx]]
+
                 if ksem_key == "key":
                     assert self.root_octaves.key is not None
                     assert isinstance(value, str)
@@ -98,6 +100,7 @@ class Keyswitches(BaseModel):
                         self.root_octaves.key,
                         middle_c=settings.middle_c,
                     ).to_midi()
+
                 elif ksem_key == "+key":
                     assert self.root_octaves.second_key is not None
                     assert isinstance(value, str)
@@ -106,6 +109,11 @@ class Keyswitches(BaseModel):
                         self.root_octaves.second_key,
                         middle_c=settings.middle_c,
                     ).to_midi()
+
+                elif ksem_key == "color":
+                    assert isinstance(value, str)
+                    row_out[ksem_key] = list(hex_color_to_tuple(settings.colors[value]))
+
                 else:
                     row_out[ksem_key] = value
 
