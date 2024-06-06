@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 from collections.abc import Generator
 from pathlib import Path
-from typing import Annotated, Any, Protocol, Self, cast
+from typing import Annotated, Any, Literal, Protocol, Self, cast
 
 import attrs
 from pydantic import (
@@ -191,28 +191,36 @@ class Root(Container[None], BaseModel):
     def from_ksem_config(
         cls,
         config_path: Path,
-        product_name: str = "Unknown product",
-        instrument_group_name: str = "Unknown instrument group",
-        instrument_name: str = "Unknown instrument",
+        *,
+        product_name: str,
+        instrument_group_name: str,
+        instrument_name: str,
+        store_settings_in: (
+            Literal["root", "product", "instrument_group", "instrument"] | None
+        ) = "root",
     ) -> Root:
         config = cast(KsemConfig, json.loads(config_path.read_text()))
 
         settings = Settings()
 
         instrument = Instrument(keyswitches=make_keyswitches(config, settings))
+        instrument_group = InstrumentGroup(instruments={instrument_name: instrument})
+        product = Product(instrument_groups={instrument_group_name: instrument_group})
+        root = Root(products={product_name: product})
 
-        return Root(
-            settings=settings,
-            products={
-                product_name: Product(
-                    instrument_groups={
-                        instrument_group_name: InstrumentGroup(
-                            instruments={instrument_name: instrument}
-                        )
-                    }
-                )
-            },
-        )
+        match store_settings_in:
+            case "root":
+                root.settings = settings
+            case "product":
+                product.settings = settings
+            case "instrument_group":
+                instrument_group.settings = settings
+            case "instrument":
+                instrument.settings = settings
+            case None:
+                pass
+
+        return root
 
     def to_yaml(
         self, compact_settings: bool = True, compact_keyswitch_values: bool = True
