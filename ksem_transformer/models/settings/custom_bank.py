@@ -32,7 +32,7 @@ midi_control_to_ksem_custom_bank_selection = {
     "custom_08": 24,
     "keyswitch": 25,
 }
-MidiControlTarget = Literal[
+type MidiControlTarget = Literal[
     "m01_modulation",
     "m02_breath",
     "m04_foot",

@@ -4,8 +4,8 @@ from pydantic import BaseModel
 
 from ksem_transformer.models.ksem_json_types import KsemDelaySettings
 
-BufferSize = Literal[64, 128, 256, 512, 1024, 2048]
-DelayMode = Literal["compensation", "track_delay"]
+type BufferSize = Literal[64, 128, 256, 512, 1024, 2048]
+type DelayMode = Literal["compensation", "track_delay"]
 
 
 class Delay(BaseModel):
@@ -29,8 +29,10 @@ class Delay(BaseModel):
         return {
             "usageRack": float(self.using_rack),
             "filterMIDICtrl": float(self.chain_selector_filters_midi_control),
-            "bufferSize": float(get_args(BufferSize).index(self.buffer_size)),
-            "delayCompensation": float(get_args(DelayMode).index(self.delay_mode)),
+            "bufferSize": float(get_args(BufferSize.__value__).index(self.buffer_size)),
+            "delayCompensation": float(
+                get_args(DelayMode.__value__).index(self.delay_mode)
+            ),
             "lock": float(self.lock_midi_control_order),
             "delayBank": self.delay_bank,
             "delaySub": self.delay_sub,

@@ -12,6 +12,7 @@ attrs = "^23.2.0"
 pydantic = "^2.7.1"
 bidict = "^0.23.1"
 ruamel-yaml = "^0.18.6"
+click = "^8.1.7"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -22,6 +23,10 @@ black = "^24.4.2"
 ruff = "^0.4.5"
 pre-commit = "^3.7.1"
 pyright = "^1.1.364"
+hypothesis = "^6.103.0"
+
+[tool.poetry.scripts]
+ksem-transformer = "ksem_transformer.__main__:main"
 
 [tool.black]
 skip-magic-trailing-comma = true

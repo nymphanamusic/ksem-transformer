@@ -69,6 +69,8 @@ key_to_offset = {
     "B": 11,
 }
 
+lowest_octave_number: dict[MiddleCLiteral, int] = {"C3": -2, "C4": -1, "C5": 0}
+
 
 def _validate_note(
     instance: Note, attribute: Attribute[NoteLiteral], value: NoteLiteral
@@ -153,9 +155,9 @@ class Note:
         return Note(note, octave, middle_c=middle_c)
 
     @classmethod
-    def from_midi(cls, midi: int, middle_c: MiddleCLiteral | None = None) -> Note:
+    def from_midi(cls, midi: int, middle_c: MiddleCLiteral) -> Note:
         note = offset_to_key[midi % 12]
-        octave = midi // 12
+        octave = midi // 12 + lowest_octave_number[middle_c]
         return Note(note=note, octave=octave, middle_c=middle_c)
 
     def to_midi(self) -> int:
@@ -169,8 +171,7 @@ class Note:
                 "the instance or use the `Note.with_middle_c` context manager"
             )
 
-        lowest_octave_number = {"C3": 2, "C4": 1, "C5": 0}
         return (
-            12 * (self.octave + lowest_octave_number[middle_c])
+            12 * (self.octave - lowest_octave_number[middle_c])
             + key_to_offset[self.note]
         )

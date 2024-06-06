@@ -6,7 +6,7 @@ from ksem_transformer.models.ksem_json_types import KsemAutomationSettings
 from ksem_transformer.models.note_field import NoteField
 from ksem_transformer.note import Note
 
-AutomationKeyResets = Literal["only_this_track", "all_ksem_instances"]
+type AutomationKeyResets = Literal["only_this_track", "all_ksem_instances"]
 
 
 class Automation(BaseModel):
@@ -20,7 +20,7 @@ class Automation(BaseModel):
 
     def to_ksem_config(self) -> KsemAutomationSettings:
         return {
-            "automationKeySetting": get_args(AutomationKeyResets).index(
+            "automationKeySetting": get_args(AutomationKeyResets.__value__).index(
                 self.automation_key_resets
             ),
             "ignoreRepeatedKey": int(self.ignore_keyswitch_notes_in_midi_clips),

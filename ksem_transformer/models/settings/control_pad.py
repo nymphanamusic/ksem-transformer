@@ -16,8 +16,10 @@ class ControlPad(BaseModel):
 
     def to_ksem_config(self) -> KsemPad:
         return {
-            "fontSize": [0, 0, get_args(FontSize).index(self.font_size)],
-            "justification": get_args(Justification).index(self.justification),
+            "fontSize": [0, 0, get_args(FontSize.__value__).index(self.font_size)],
+            "justification": get_args(Justification.__value__).index(
+                self.justification
+            ),
             "showKSNumbers": int(self.show_ks_number),
             "showKSNotes": int(self.show_ks_note),
             "fontSizeButton": 0,  # I think this setting does nothing
