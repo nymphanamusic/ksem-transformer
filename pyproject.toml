@@ -19,7 +19,6 @@ click = "^8.1.7"
 pytest = "^8.2.0"
 ipython = "^8.24.0"
 mypy = "^1.10.0"
-black = "^24.4.2"
 ruff = "^0.4.5"
 pre-commit = "^3.7.1"
 pyright = "^1.1.364"
@@ -28,7 +27,10 @@ hypothesis = "^6.103.0"
 [tool.poetry.scripts]
 ksem-transformer = "ksem_transformer.__main__:main"
 
-[tool.black]
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.format]
 skip-magic-trailing-comma = true
 
 [build-system]
