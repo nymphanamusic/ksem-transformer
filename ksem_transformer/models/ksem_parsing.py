@@ -1,5 +1,7 @@
 from typing import Any, cast
 
+import attrs
+
 from ksem_transformer.models.keyswitches import (
     Keyswitches,
     KeyswitchesRootOctaves,
@@ -9,6 +11,19 @@ from ksem_transformer.models.keyswitches import (
 from ksem_transformer.models.ksem_json_types import EMPTY_VALUE, EmptyValue, KsemConfig
 from ksem_transformer.models.settings.settings import Settings
 from ksem_transformer.note import Note
+
+
+@attrs.define(hash=True)
+class Color:
+    r: int
+    g: int
+    b: int
+
+    def to_int(self) -> int:
+        return self.r | self.g << 8 | self.b << 16
+
+    def to_hex(self, prefix: str = "") -> str:
+        return f"{prefix}{self.r:02x}{self.g:02x}{self.b:02x}"
 
 
 def make_keyswitches(config: KsemConfig, settings: Settings) -> Keyswitches:
@@ -26,7 +41,7 @@ def make_keyswitches(config: KsemConfig, settings: Settings) -> Keyswitches:
         )
     )
 
-    colors: list[tuple[int, ...]] = []
+    colors: list[Color] = []
     notes = {"key": set[Note](), "second_key": set[Note]()}
     values: list[list[Note | int | str]] = []
     for ks in config["ks"].values():
@@ -53,12 +68,12 @@ def make_keyswitches(config: KsemConfig, settings: Settings) -> Keyswitches:
                 # This is a color
                 assert isinstance(raw_value, list)
                 # We're keeping track of the unique colors and assigning identities
-                # to them (from their list index)
-                color = tuple(raw_value)
+                # to them (using their hex value)
+                color = Color(*raw_value)
                 if color not in colors:
                     colors.append(color)
                 # The user will be responsible for assigning more useful color names
-                row.append(f"Color{colors.index(color):02}")
+                row.append(f"Color_{color.to_hex()}")
 
             else:
                 # This is some other unspecial value. We'll just use it raw
@@ -82,8 +97,7 @@ def make_keyswitches(config: KsemConfig, settings: Settings) -> Keyswitches:
         setattr(root_octaves, _field_name, notes[_field_name].pop().octave)
 
     # Store the colors in the `Settings`
-    for idx, color in enumerate(colors):
-        color_int = color[0] | color[1] << 8 | color[2] << 16
-        settings.colors[f"Color{idx:02}"] = f"#{color_int:6x}"
+    for color in colors:
+        settings.colors[f"Color_{color.to_hex()}"] = f"#{color.to_hex()}"
 
     return Keyswitches(root_octaves=root_octaves, mapping=mapping, values=values)

@@ -3,8 +3,9 @@ from __future__ import annotations
 
 import json
 from collections.abc import Generator
+from functools import reduce
 from pathlib import Path
-from typing import Annotated, Any, Protocol, Self, cast
+from typing import Annotated, Any, Literal, Protocol, Self, cast
 
 import attrs
 from pydantic import (
@@ -23,9 +24,12 @@ from ksem_transformer.models.ksem_json_types import KsemConfig
 from ksem_transformer.models.ksem_parsing import make_keyswitches
 from ksem_transformer.models.settings.settings import Settings
 from ksem_transformer.note import Note
+from ksem_transformer.utils.tree import Tree, deep_join_trees
 from ksem_transformer.utils.yaml_utils import yaml_dumps, yaml_load
 
 KSEM_VERSION = "4.2"
+
+type SettingsLocation = Literal["root", "product", "instrument_group", "instrument"]
 
 
 class HasSettings(Protocol):
@@ -42,8 +46,8 @@ class KsemConfigFile:
     data: KsemConfig
 
 
-class Container[T: "Container | None"](BaseModel):
-    parent: T | None = Field(default=None, exclude=True)
+class Container[Parent: "Container | None"](BaseModel):
+    parent: Parent | None = Field(default=None, exclude=True)
     settings: Settings = Field(default_factory=Settings)
 
     @model_serializer(mode="wrap")
@@ -122,9 +126,9 @@ class InstrumentGroup(Container["Product"], BaseModel):
 
     @model_validator(mode="after")
     def set_parent(self) -> Self:
-        cast(ChildDict[str, Instrument, InstrumentGroup], self.instruments).parent = (
-            self
-        )
+        cast(
+            ChildDict[str, Instrument, InstrumentGroup], self.instruments
+        ).parent = self
         return self
 
 
@@ -191,27 +195,42 @@ class Root(Container[None], BaseModel):
     def from_ksem_config(
         cls,
         config_path: Path,
-        product_name: str = "Unknown product",
-        instrument_group_name: str = "Unknown instrument group",
-        instrument_name: str = "Unknown instrument",
+        *,
+        product_name: str,
+        instrument_group_name: str,
+        instrument_name: str,
+        store_settings_in: SettingsLocation | None = "root",
     ) -> Root:
         config = cast(KsemConfig, json.loads(config_path.read_text()))
 
         settings = Settings()
 
         instrument = Instrument(keyswitches=make_keyswitches(config, settings))
+        instrument_group = InstrumentGroup(instruments={instrument_name: instrument})
+        product = Product(instrument_groups={instrument_group_name: instrument_group})
+        root = Root(products={product_name: product})
 
-        return Root(
-            settings=settings,
-            products={
-                product_name: Product(
-                    instrument_groups={
-                        instrument_group_name: InstrumentGroup(
-                            instruments={instrument_name: instrument}
-                        )
-                    }
-                )
-            },
+        match store_settings_in:
+            case "root":
+                root.settings = settings
+            case "product":
+                product.settings = settings
+            case "instrument_group":
+                instrument_group.settings = settings
+            case "instrument":
+                instrument.settings = settings
+            case None:
+                pass
+
+        return root
+
+    @classmethod
+    def combine(cls, *roots: Root) -> Root:
+        return Root.model_validate(
+            reduce(
+                lambda a, b: deep_join_trees(a, b),
+                (cast(Tree[object, object], i.model_dump()) for i in roots),
+            )
         )
 
     def to_yaml(
