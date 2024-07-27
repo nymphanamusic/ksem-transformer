@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import typing
 from typing import Literal, cast
 
 from pydantic import BaseModel, Field
 
-from ksem_transformer.models.ksem_json_types import KsemMidiControls
+from ksem_transformer.models.ksem_json_types import KsemConfig, KsemMidiControls
 
 # Mapping of internal MIDI control names to KSEM control names
 midi_control_to_ksem = {
@@ -187,6 +189,107 @@ class MidiControls(BaseModel):
     custom_06: CustomMidiControl = Field(default_factory=CustomMidiControl)
     custom_07: CustomMidiControl = Field(default_factory=CustomMidiControl)
     custom_08: CustomMidiControl = Field(default_factory=CustomMidiControl)
+
+    @classmethod
+    def from_ksem_config(cls, config: KsemConfig) -> MidiControls:
+        cfg = config["midiControls"]
+        return MidiControls(
+            m01_modulation=MidiControl(
+                enabled=bool(cfg["01Modulation_button"]), value=cfg["01Modulation_dial"]
+            ),
+            m02_breath=MidiControl(
+                enabled=bool(cfg["02Breath_button"]), value=cfg["02Breath_dial"]
+            ),
+            m04_foot=MidiControl(
+                enabled=bool(cfg["04FootPedal_button"]), value=cfg["04FootPedal_dial"]
+            ),
+            m05_portamento=MidiControl(
+                enabled=bool(cfg["05PortamentoTime_button"]),
+                value=cfg["05PortamentoTime_dial"],
+            ),
+            m07_volume=MidiControl(
+                enabled=bool(cfg["07Volume_button"]), value=cfg["07Volume_dial"]
+            ),
+            m10_pan=MidiControl(
+                enabled=bool(cfg["10Pan_button"]), value=cfg["10Pan_dial"]
+            ),
+            m11_expression=MidiControl(
+                enabled=bool(cfg["11Expression_button"]), value=cfg["11Expression_dial"]
+            ),
+            m64_hold=MidiControl(
+                enabled=bool(cfg["64HoldPedal_button"]), value=cfg["64HoldPedal_dial"]
+            ),
+            m65_portamento=MidiControl(
+                enabled=bool(cfg["65PortamentoOnOff_button"]),
+                value=cfg["65PortamentoOnOff_dial"],
+            ),
+            m66_sostenuto=MidiControl(
+                enabled=bool(cfg["66SostenutoPedal_button"]),
+                value=cfg["66SostenutoPedal_dial"],
+            ),
+            m67_soft=MidiControl(
+                enabled=bool(cfg["67SoftPedal_button"]), value=cfg["67SoftPedal_dial"]
+            ),
+            m68_legato=MidiControl(
+                enabled=bool(cfg["68LegatoPedal_button"]),
+                value=cfg["68LegatoPedal_dial"],
+            ),
+            m71_resonance=MidiControl(
+                enabled=bool(cfg["71Resonance_button"]), value=cfg["71Resonance_dial"]
+            ),
+            m74_frequency=MidiControl(
+                enabled=bool(cfg["74FrequencyCutoff_button"]),
+                value=cfg["74FrequencyCutoff_dial"],
+            ),
+            m91_reverb=MidiControl(
+                enabled=bool(cfg["91ReverbLevel_button"]),
+                value=cfg["91ReverbLevel_dial"],
+            ),
+            m93_chorus=MidiControl(
+                enabled=bool(cfg["93ChorusLevel_button"]),
+                value=cfg["93ChorusLevel_dial"],
+            ),
+            custom_01=CustomMidiControl(
+                enabled=bool(cfg["CcCustom01_button"]),
+                value=cfg["CcCustom01_dial"],
+                midi_cc=cast(CustomOptions, cfg["CcCustom01_num"]),
+            ),
+            custom_02=CustomMidiControl(
+                enabled=bool(cfg["CcCustom02_button"]),
+                value=cfg["CcCustom02_dial"],
+                midi_cc=cast(CustomOptions, cfg["CcCustom02_num"]),
+            ),
+            custom_03=CustomMidiControl(
+                enabled=bool(cfg["CcCustom03_button"]),
+                value=cfg["CcCustom03_dial"],
+                midi_cc=cast(CustomOptions, cfg["CcCustom03_num"]),
+            ),
+            custom_04=CustomMidiControl(
+                enabled=bool(cfg["CcCustom04_button"]),
+                value=cfg["CcCustom04_dial"],
+                midi_cc=cast(CustomOptions, cfg["CcCustom04_num"]),
+            ),
+            custom_05=CustomMidiControl(
+                enabled=bool(cfg["CcCustom05_button"]),
+                value=cfg["CcCustom05_dial"],
+                midi_cc=cast(CustomOptions, cfg["CcCustom05_num"]),
+            ),
+            custom_06=CustomMidiControl(
+                enabled=bool(cfg["CcCustom06_button"]),
+                value=cfg["CcCustom06_dial"],
+                midi_cc=cast(CustomOptions, cfg["CcCustom06_num"]),
+            ),
+            custom_07=CustomMidiControl(
+                enabled=bool(cfg["CcCustom07_button"]),
+                value=cfg["CcCustom07_dial"],
+                midi_cc=cast(CustomOptions, cfg["CcCustom07_num"]),
+            ),
+            custom_08=CustomMidiControl(
+                enabled=bool(cfg["CcCustom08_button"]),
+                value=cfg["CcCustom08_dial"],
+                midi_cc=cast(CustomOptions, cfg["CcCustom08_num"]),
+            ),
+        )
 
     def to_ksem_config(self) -> KsemMidiControls:
         """
