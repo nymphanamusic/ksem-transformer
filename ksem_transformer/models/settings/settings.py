@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from ksem_transformer.models.ksem_json_types import KsemConfig
 from ksem_transformer.models.note_field import NoteField
 from ksem_transformer.models.settings.automation import Automation
 from ksem_transformer.models.settings.control_pad import ControlPad
@@ -21,6 +22,15 @@ class PitchRange(BaseModel):
     low: NoteField
     high: NoteField
 
+    @classmethod
+    def from_ksem_config(
+        cls, config: KsemConfig, middle_c: MiddleCLiteral
+    ) -> PitchRange:
+        return PitchRange(
+            low=Note.from_midi(config["piano"]["pitchLow"], middle_c=middle_c),
+            high=Note.from_midi(config["piano"]["pitchHigh"], middle_c=middle_c),
+        )
+
 
 class Settings(BaseModel):
     """
@@ -29,9 +39,11 @@ class Settings(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
+    default_middle_c: ClassVar[MiddleCLiteral] = "C3"
+
     comment_template: str = ""
     colors: dict[str, str] = Field(default_factory=dict)
-    middle_c: MiddleCLiteral = "C3"
+    middle_c: MiddleCLiteral = default_middle_c
     pitch_range: PitchRange = PitchRange(
         low=Note("C", -2, "C3"), high=Note("C", 8, "C3")
     )
@@ -48,6 +60,21 @@ class Settings(BaseModel):
 
     def is_default(self) -> bool:
         return self == Settings()
+
+    @classmethod
+    def from_ksem_config(cls, config: KsemConfig) -> Settings:
+        return Settings(
+            pitch_range=PitchRange.from_ksem_config(config, cls.default_middle_c),
+            mpe_support=bool(config["keySwitchManager"]["mpeSupportButton"]),
+            send_main_key=bool(config["keySwitchSettings"]["sendMainKey"]),
+            midi_controls=MidiControls.from_ksem_config(config),
+            custom_bank=CustomBank.from_ksem_config(config),
+            xy_pad=XYPad.from_ksem_config(config),
+            delay=Delay.from_ksem_config(config),
+            automation=Automation.from_ksem_config(config, cls.default_middle_c),
+            router=Router.from_ksem_config(config),
+            control_pad=ControlPad.from_ksem_config(config),
+        )
 
     @classmethod
     def combine(cls, *others: Settings) -> Settings:

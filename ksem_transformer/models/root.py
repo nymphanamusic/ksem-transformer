@@ -203,7 +203,7 @@ class Root(Container[None], BaseModel):
     ) -> Root:
         config = cast(KsemConfig, json.loads(config_path.read_text()))
 
-        settings = Settings()
+        settings = Settings.from_ksem_config(config)
 
         instrument = Instrument(keyswitches=make_keyswitches(config, settings))
         instrument_group = InstrumentGroup(instruments={instrument_name: instrument})

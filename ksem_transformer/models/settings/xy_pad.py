@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import typing
-from typing import Literal
+from typing import Literal, cast, get_args
 
 from pydantic import BaseModel
 
-from ksem_transformer.models.ksem_json_types import KsemXYFade
+from ksem_transformer.models.ksem_json_types import KsemConfig, KsemXYFade
 
 type AxisTarget = Literal[
     None,
@@ -136,6 +138,19 @@ class XYPad(BaseModel):
     x_axis_target: AxisTarget = None
     y_axis_target: AxisTarget = None
     pad_shape: PadShape = "filled_rectangle"
+
+    @classmethod
+    def from_ksem_config(cls, config: KsemConfig) -> XYPad:
+        cfg = config["xyFade"]
+        return XYPad(
+            x_axis_target=cast(
+                AxisTarget, get_args(AxisTarget.__value__)[cfg["chooseXFade"]]
+            ),
+            y_axis_target=cast(
+                AxisTarget, get_args(AxisTarget.__value__)[cfg["chooseYFade"]]
+            ),
+            pad_shape=cast(PadShape, get_args(PadShape.__value__)[cfg["xyFadeShape"]]),
+        )
 
     def to_ksem_config(self) -> KsemXYFade:
         axis_target_options = typing.get_args(AxisTarget.__value__)

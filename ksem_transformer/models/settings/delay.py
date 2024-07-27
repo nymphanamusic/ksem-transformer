@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 from typing import Literal, get_args
 
 from pydantic import BaseModel
 
-from ksem_transformer.models.ksem_json_types import KsemDelaySettings
+from ksem_transformer.models.ksem_json_types import KsemConfig, KsemDelaySettings
 
 type BufferSize = Literal[64, 128, 256, 512, 1024, 2048]
 type DelayMode = Literal["compensation", "track_delay"]
@@ -24,6 +26,24 @@ class Delay(BaseModel):
     delay_main_key: float = 0.5
     delay_second_key: float = 0.6
     delay_passed_thru_midi_note: float = 1.0
+
+    @classmethod
+    def from_ksem_config(cls, config: KsemConfig) -> Delay:
+        cfg = config["delaySettings"]
+        return Delay(
+            using_rack=bool(cfg["usageRack"]),
+            chain_selector_filters_midi_control=bool(cfg["filterMIDICtrl"]),
+            buffer_size=get_args(BufferSize.__value__)[int(cfg["bufferSize"])],
+            delay_mode=get_args(DelayMode.__value__)[int(cfg["delayCompensation"])],
+            lock_midi_control_order=bool(cfg["lock"]),
+            delay_bank=cfg["delayBank"],
+            delay_sub=cfg["delaySub"],
+            delay_program=cfg["delayPgm"],
+            delay_cc=cfg["delayCC"],
+            delay_main_key=cfg["delayMainKey"],
+            delay_second_key=cfg["delayAdditionalKey"],
+            delay_passed_thru_midi_note=cfg["delayMIDINote"],
+        )
 
     def to_ksem_config(self) -> KsemDelaySettings:
         return {
