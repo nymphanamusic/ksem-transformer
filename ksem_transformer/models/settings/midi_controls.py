@@ -11,20 +11,20 @@ from ksem_transformer.models.ksem_json_types import KsemConfig, KsemMidiControls
 midi_control_to_ksem = {
     "m01_modulation": "01Modulation",
     "m02_breath": "02Breath",
-    "m04_foot": "04FootPedal",
-    "m05_portamento": "05PortamentoTime",
+    "m04_foot_pedal": "04FootPedal",
+    "m05_portamento_time": "05PortamentoTime",
     "m07_volume": "07Volume",
     "m10_pan": "10Pan",
     "m11_expression": "11Expression",
-    "m64_hold": "64HoldPedal",
-    "m65_portamento": "65PortamentoOnOff",
-    "m66_sostenuto": "66SostenutoPedal",
-    "m67_soft": "67SoftPedal",
-    "m68_legato": "68LegatoPedal",
+    "m64_hold_pedal": "64HoldPedal",
+    "m65_portamento_on_off": "65PortamentoOnOff",
+    "m66_sostenuto_pedal": "66SostenutoPedal",
+    "m67_soft_pedal": "67SoftPedal",
+    "m68_legato_pedal": "68LegatoPedal",
     "m71_resonance": "71Resonance",
-    "m74_frequency": "74FrequencyCutoff",
-    "m91_reverb": "91ReverbLevel",
-    "m93_chorus": "93ChorusLevel",
+    "m74_frequency_cutoff": "74FrequencyCutoff",
+    "m91_reverb_level": "91ReverbLevel",
+    "m93_chorus_level": "93ChorusLevel",
     "custom_01": "CcCustom01",
     "custom_02": "CcCustom02",
     "custom_03": "CcCustom03",
@@ -166,20 +166,20 @@ class MidiControls(BaseModel):
 
     m01_modulation: MidiControl = Field(default_factory=MidiControl)
     m02_breath: MidiControl = Field(default_factory=MidiControl)
-    m04_foot: MidiControl = Field(default_factory=MidiControl)
-    m05_portamento: MidiControl = Field(default_factory=MidiControl)
+    m04_foot_pedal: MidiControl = Field(default_factory=MidiControl)
+    m05_portamento_time: MidiControl = Field(default_factory=MidiControl)
     m07_volume: MidiControl = Field(default_factory=MidiControl)
     m10_pan: MidiControl = Field(default_factory=MidiControl)
     m11_expression: MidiControl = Field(default_factory=MidiControl)
-    m64_hold: MidiControl = Field(default_factory=MidiControl)
-    m65_portamento: MidiControl = Field(default_factory=MidiControl)
-    m66_sostenuto: MidiControl = Field(default_factory=MidiControl)
-    m67_soft: MidiControl = Field(default_factory=MidiControl)
-    m68_legato: MidiControl = Field(default_factory=MidiControl)
+    m64_hold_pedal: MidiControl = Field(default_factory=MidiControl)
+    m65_portamento_on_off: MidiControl = Field(default_factory=MidiControl)
+    m66_sostenuto_pedal: MidiControl = Field(default_factory=MidiControl)
+    m67_soft_pedal: MidiControl = Field(default_factory=MidiControl)
+    m68_legato_pedal: MidiControl = Field(default_factory=MidiControl)
     m71_resonance: MidiControl = Field(default_factory=MidiControl)
-    m74_frequency: MidiControl = Field(default_factory=MidiControl)
-    m91_reverb: MidiControl = Field(default_factory=MidiControl)
-    m93_chorus: MidiControl = Field(default_factory=MidiControl)
+    m74_frequency_cutoff: MidiControl = Field(default_factory=MidiControl)
+    m91_reverb_level: MidiControl = Field(default_factory=MidiControl)
+    m93_chorus_level: MidiControl = Field(default_factory=MidiControl)
 
     custom_01: CustomMidiControl = Field(default_factory=CustomMidiControl)
     custom_02: CustomMidiControl = Field(default_factory=CustomMidiControl)
@@ -200,10 +200,10 @@ class MidiControls(BaseModel):
             m02_breath=MidiControl(
                 enabled=bool(cfg["02Breath_button"]), value=cfg["02Breath_dial"]
             ),
-            m04_foot=MidiControl(
+            m04_foot_pedal=MidiControl(
                 enabled=bool(cfg["04FootPedal_button"]), value=cfg["04FootPedal_dial"]
             ),
-            m05_portamento=MidiControl(
+            m05_portamento_time=MidiControl(
                 enabled=bool(cfg["05PortamentoTime_button"]),
                 value=cfg["05PortamentoTime_dial"],
             ),
@@ -216,36 +216,36 @@ class MidiControls(BaseModel):
             m11_expression=MidiControl(
                 enabled=bool(cfg["11Expression_button"]), value=cfg["11Expression_dial"]
             ),
-            m64_hold=MidiControl(
+            m64_hold_pedal=MidiControl(
                 enabled=bool(cfg["64HoldPedal_button"]), value=cfg["64HoldPedal_dial"]
             ),
-            m65_portamento=MidiControl(
+            m65_portamento_on_off=MidiControl(
                 enabled=bool(cfg["65PortamentoOnOff_button"]),
                 value=cfg["65PortamentoOnOff_dial"],
             ),
-            m66_sostenuto=MidiControl(
+            m66_sostenuto_pedal=MidiControl(
                 enabled=bool(cfg["66SostenutoPedal_button"]),
                 value=cfg["66SostenutoPedal_dial"],
             ),
-            m67_soft=MidiControl(
+            m67_soft_pedal=MidiControl(
                 enabled=bool(cfg["67SoftPedal_button"]), value=cfg["67SoftPedal_dial"]
             ),
-            m68_legato=MidiControl(
+            m68_legato_pedal=MidiControl(
                 enabled=bool(cfg["68LegatoPedal_button"]),
                 value=cfg["68LegatoPedal_dial"],
             ),
             m71_resonance=MidiControl(
                 enabled=bool(cfg["71Resonance_button"]), value=cfg["71Resonance_dial"]
             ),
-            m74_frequency=MidiControl(
+            m74_frequency_cutoff=MidiControl(
                 enabled=bool(cfg["74FrequencyCutoff_button"]),
                 value=cfg["74FrequencyCutoff_dial"],
             ),
-            m91_reverb=MidiControl(
+            m91_reverb_level=MidiControl(
                 enabled=bool(cfg["91ReverbLevel_button"]),
                 value=cfg["91ReverbLevel_dial"],
             ),
-            m93_chorus=MidiControl(
+            m93_chorus_level=MidiControl(
                 enabled=bool(cfg["93ChorusLevel_button"]),
                 value=cfg["93ChorusLevel_dial"],
             ),

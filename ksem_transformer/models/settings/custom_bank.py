@@ -12,20 +12,20 @@ midi_control_to_ksem_custom_bank_selection = bidict(
     {
         "m01_modulation": 1,
         "m02_breath": 2,
-        "m04_foot": 3,
-        "m05_portamento": 4,
+        "m04_foot_pedal": 3,
+        "m05_portamento_time": 4,
         "m07_volume": 5,
         "m10_pan": 6,
         "m11_expression": 7,
-        "m64_hold": 8,
-        "m65_portamento": 9,
-        "m66_sostenuto": 10,
-        "m67_soft": 11,
-        "m68_legato": 12,
+        "m64_hold_pedal": 8,
+        "m65_portamento_on_off": 9,
+        "m66_sostenuto_pedal": 10,
+        "m67_soft_pedal": 11,
+        "m68_legato_pedal": 12,
         "m71_resonance": 13,
-        "m74_frequency": 14,
-        "m91_reverb": 15,
-        "m93_chorus": 16,
+        "m74_frequency_cutoff": 14,
+        "m91_reverb_level": 15,
+        "m93_chorus_level": 16,
         "custom_01": 17,
         "custom_02": 18,
         "custom_03": 19,
@@ -40,20 +40,20 @@ midi_control_to_ksem_custom_bank_selection = bidict(
 type MidiControlTarget = Literal[
     "m01_modulation",
     "m02_breath",
-    "m04_foot",
-    "m05_portamento",
+    "m04_foot_pedal",
+    "m05_portamento_time",
     "m07_volume",
     "m10_pan",
     "m11_expression",
-    "m64_hold",
-    "m65_portamento",
-    "m66_sostenuto",
-    "m67_soft",
-    "m68_legato",
+    "m64_hold_pedal",
+    "m65_portamento_on_off",
+    "m66_sostenuto_pedal",
+    "m67_soft_pedal",
+    "m68_legato_pedal",
     "m71_resonance",
-    "m74_frequency",
-    "m91_reverb",
-    "m93_chorus",
+    "m74_frequency_cutoff",
+    "m91_reverb_level",
+    "m93_chorus_level",
     "custom_01",
     "custom_02",
     "custom_03",
@@ -95,62 +95,18 @@ class CustomBank(BaseModel):
         cfg = config["customBank"]
         return CustomBank(
             custom_bank_visible=bool(cfg["showHideCustomBank"]),
-            knob_01=CustomBankKnob(
-                name=cfg["label"]["ctrl1"],
-                control_target=cast(
-                    MidiControlTarget,
-                    midi_control_to_ksem_custom_bank_selection.inv[cfg["ctrl1_menu"]],
-                ),
-            ),
-            knob_02=CustomBankKnob(
-                name=cfg["label"]["ctrl2"],
-                control_target=cast(
-                    MidiControlTarget,
-                    midi_control_to_ksem_custom_bank_selection.inv[cfg["ctrl2_menu"]],
-                ),
-            ),
-            knob_03=CustomBankKnob(
-                name=cfg["label"]["ctrl3"],
-                control_target=cast(
-                    MidiControlTarget,
-                    midi_control_to_ksem_custom_bank_selection.inv[cfg["ctrl3_menu"]],
-                ),
-            ),
-            knob_04=CustomBankKnob(
-                name=cfg["label"]["ctrl4"],
-                control_target=cast(
-                    MidiControlTarget,
-                    midi_control_to_ksem_custom_bank_selection.inv[cfg["ctrl4_menu"]],
-                ),
-            ),
-            knob_05=CustomBankKnob(
-                name=cfg["label"]["ctrl5"],
-                control_target=cast(
-                    MidiControlTarget,
-                    midi_control_to_ksem_custom_bank_selection.inv[cfg["ctrl5_menu"]],
-                ),
-            ),
-            knob_06=CustomBankKnob(
-                name=cfg["label"]["ctrl6"],
-                control_target=cast(
-                    MidiControlTarget,
-                    midi_control_to_ksem_custom_bank_selection.inv[cfg["ctrl6_menu"]],
-                ),
-            ),
-            knob_07=CustomBankKnob(
-                name=cfg["label"]["ctrl7"],
-                control_target=cast(
-                    MidiControlTarget,
-                    midi_control_to_ksem_custom_bank_selection.inv[cfg["ctrl7_menu"]],
-                ),
-            ),
-            knob_08=CustomBankKnob(
-                name=cfg["label"]["ctrl8"],
-                control_target=cast(
-                    MidiControlTarget,
-                    midi_control_to_ksem_custom_bank_selection.inv[cfg["ctrl8_menu"]],
-                ),
-            ),
+            **{
+                f"knob_{i:02d}": CustomBankKnob(
+                    name=cast(str, cfg["label"][f"ctrl{1}"]),
+                    control_target=cast(
+                        MidiControlTarget,
+                        midi_control_to_ksem_custom_bank_selection.inv[
+                            cfg[f"ctrl{i}_menu"]
+                        ],
+                    ),
+                )
+                for i in range(1, 9)
+            },
         )
 
     def to_ksem_config(self) -> KsemCustomBank:
