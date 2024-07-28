@@ -44,6 +44,15 @@ from ksem_transformer.models.root import Root, SettingsLocation
         "`root` is the highest level, `instrument` is the lowest."
     ),
 )
+@click.option(
+    "--store-pitch-range-setting-in",
+    type=click.Choice(get_args(SettingsLocation.__value__)),
+    default="instrument",
+    help=(
+        "When generating the settings field, at what level do you want it stored? "
+        "`root` is the highest level, `instrument` is the lowest."
+    ),
+)
 @click.option("--yes", help="Answer yes to any prompts", is_flag=True)
 def from_ksem(
     *,
@@ -53,6 +62,7 @@ def from_ksem(
     instrument_group_name: str | None,
     instrument_name: str | None,
     store_settings_in: SettingsLocation | None,
+    store_pitch_range_setting_in: SettingsLocation,
     yes: bool,
 ):
     # Load the root configuration from a YAML file and write KSEM config files
@@ -74,6 +84,7 @@ def from_ksem(
         instrument_group_name=instrument_group_name or "Unknown instrument group",
         instrument_name=instrument_name or "Unknown instrument",
         store_settings_in=store_settings_in,
+        store_pitch_range_setting_in=store_pitch_range_setting_in,
     )
     if original_data:
         # Merge new data into the previous data
