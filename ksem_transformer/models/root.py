@@ -200,6 +200,7 @@ class Root(Container[None], BaseModel):
         instrument_group_name: str,
         instrument_name: str,
         store_settings_in: SettingsLocation | None = "root",
+        store_pitch_range_setting_in: SettingsLocation = "instrument",
     ) -> Root:
         config = cast(KsemConfig, json.loads(config_path.read_text()))
 
@@ -221,6 +222,20 @@ class Root(Container[None], BaseModel):
                 instrument.settings = settings
             case None:
                 pass
+
+        # Move the pitch range setting to wherever the user requested (it's a special
+        # case)
+        pitch_range = settings.pitch_range
+        root.settings.pitch_range = Settings.default_pitch_range()
+        match store_pitch_range_setting_in:
+            case "root":
+                root.settings.pitch_range = pitch_range
+            case "product":
+                product.settings.pitch_range = pitch_range
+            case "instrument_group":
+                instrument_group.settings.pitch_range = pitch_range
+            case "instrument":
+                instrument.settings.pitch_range = pitch_range
 
         return root
 

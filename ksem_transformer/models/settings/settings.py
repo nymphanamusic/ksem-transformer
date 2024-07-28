@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import copy
 from typing import Any, ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -40,13 +41,14 @@ class Settings(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     default_middle_c: ClassVar[MiddleCLiteral] = "C3"
+    _default_pitch_range: ClassVar[PitchRange] = PitchRange(
+        low=Note("C", -2, "C3"), high=Note("C", 8, "C3")
+    )
 
     comment_template: str = ""
     colors: dict[str, str] = Field(default_factory=dict)
     middle_c: MiddleCLiteral = default_middle_c
-    pitch_range: PitchRange = PitchRange(
-        low=Note("C", -2, "C3"), high=Note("C", 8, "C3")
-    )
+    pitch_range: PitchRange = copy(_default_pitch_range)
     mpe_support: bool = False
     send_main_key: bool = True
 
@@ -57,6 +59,10 @@ class Settings(BaseModel):
     automation: Automation = Field(default_factory=Automation)
     router: Router = Field(default_factory=Router)
     control_pad: ControlPad = Field(default_factory=ControlPad)
+
+    @classmethod
+    def default_pitch_range(cls) -> PitchRange:
+        return copy(cls._default_pitch_range)
 
     def is_default(self) -> bool:
         return self == Settings()
