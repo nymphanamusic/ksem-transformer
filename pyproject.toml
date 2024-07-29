@@ -16,13 +16,20 @@ click = "^8.1.7"
 
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^8.2.0"
 ipython = "^8.24.0"
 mypy = "^1.10.0"
 ruff = "^0.4.5"
 pre-commit = "^3.7.1"
 pyright = "^1.1.364"
+
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.2.0"
 hypothesis = "^6.103.0"
+
+
+[tool.poetry.group.build.dependencies]
+pyinstaller = { version = "^6.9.0", markers = "python_version < '3.13'" }
 
 [tool.poetry.scripts]
 ksem-transformer = "ksem_transformer.__main__:main"
