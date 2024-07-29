@@ -9,64 +9,64 @@ jobs:
   publish_with_poetry:
     strategy:
       matrix:
-        os: 
-        - ubuntu-latest
-        - macos-latest
-        - windows-latest
-    
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Add Poetry to path
-      run: |
-        echo "PATH=~/.local/share/pypoetry/venv/bin:${PATH}" >> $GITHUB_ENV
+      - name: Add Poetry to path
+        run: |
+          echo "PATH=~/.local/share/pypoetry/venv/bin:${PATH}" >> $GITHUB_ENV
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
 
-    - name: Cache Poetry
-      id: cache-poetry
-      uses: actions/cache@v4
-      env:
-        cache-name: cache-poetry
-      with:
-        path: |
-          ~/.local/share/pypoetry
-        key: >
-          ${{ runner.os }}-${{ env.cache-name }}
+      - name: Cache Poetry
+        id: cache-poetry
+        uses: actions/cache@v4
+        env:
+          cache-name: cache-poetry
+        with:
+          path: |
+            ~/.local/share/pypoetry
+          key: >
+            ${{ runner.os }}-${{ env.cache-name }}
 
-    - name: Cache Poetry packages
-      id: cache-poetry-packages
-      uses: actions/cache@v4
-      env:
-        cache-name: cache-poetry-packages
-      with:
-        path: |
-          ~/.cache/pypoetry
-        key: >
-          ${{ runner.os }}-${{ env.cache-name }}-${{ env.PYTHON_VERSION }}
-          -${{ hashFiles('**/pyproject.toml') }}
+      - name: Cache Poetry packages
+        id: cache-poetry-packages
+        uses: actions/cache@v4
+        env:
+          cache-name: cache-poetry-packages
+        with:
+          path: |
+            ~/.cache/pypoetry
+          key: >
+            ${{ runner.os }}-${{ env.cache-name }}-${{ env.PYTHON_VERSION }}
+            -${{ hashFiles('**/pyproject.toml') }}
 
-    - if: ${{ steps.cache-poetry.outputs.cache-hit != 'true' }}
-      name: Install Poetry if not cached
-      run: |
-        curl -sSL https://install.python-poetry.org | python3 -
+      - if: ${{ steps.cache-poetry.outputs.cache-hit != 'true' }}
+        name: Install Poetry if not cached
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
 
-    - if: ${{ steps.cache-poetry-packages.outputs.cache-hit != 'true' }}
-      name: Install dependencies if not cached
-      run: |
-        poetry install --no-root --with build
+      - if: ${{ steps.cache-poetry-packages.outputs.cache-hit != 'true' }}
+        name: Install dependencies if not cached
+        run: |
+          poetry install --no-root --with build
 
-    - name: Build with PyInstaller
-      run: |
-        poetry run pyinstaller -y -n ksem_transformer --optimize 2 ./ksem_transformer/__main__.py
+      - name: Build with PyInstaller
+        run: |
+          poetry run pyinstaller -y -n ksem_transformer --optimize 2 ./ksem_transformer/__main__.py
 
-    - name: Upload build artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: build
-        path: dist/ksem_transformer.exe
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: dist/ksem_transformer.exe
