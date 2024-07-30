@@ -1,9 +1,9 @@
-name: Build binary with PyInstaller
+name: Run tests
 
 on: workflow_call
 
 jobs:
-  build-binary:
+  run-tests:
     strategy:
       matrix:
         os:
@@ -56,14 +56,11 @@ jobs:
       - if: ${{ steps.cache-poetry-packages.outputs.cache-hit != 'true' }}
         name: Install dependencies if not cached
         run: |
-          poetry install --no-root --with build
+          poetry install --no-root --with test
 
       - name: Build with PyInstaller
         run: |
-          poetry run pyinstaller -y -n ksem_transformer --optimize 2 ./ksem_transformer/__main__.py
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: "build-${{ runner.os }}"
-          path: dist/ksem_transformer.exe
+          poetry run ruff check --exit-zero --statistics
+      - name: Build with PyInstaller
+        run: |
+          poetry run pytest
