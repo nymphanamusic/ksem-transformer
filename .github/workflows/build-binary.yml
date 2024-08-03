@@ -1,0 +1,38 @@
+name: Build binary with PyInstaller
+
+on: workflow_call
+
+env:
+  POETRY_HOME: ~/poetry
+  POETRY_CACHE_DIR: ~/poetry_cache
+
+jobs:
+  build-binary:
+    strategy:
+      fail-fast: true
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: nymphanamusic/cached-poetry-action@HEAD
+        with:
+          additional-dependency-groups: '["build"]'
+          poetry-version: ${{ vars.POETRY_VERSION }}
+          python-version: ${{ vars.PYTHON_VERSION }}
+
+      - name: Build with PyInstaller
+        run: |
+          poetry run pyinstaller -y -n ksem_transformer --optimize 2 ./ksem_transformer/__main__.py
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: "build-${{ runner.os }}"
+          path: dist/ksem_transformer.exe

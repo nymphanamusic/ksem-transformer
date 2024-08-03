@@ -1,0 +1,30 @@
+name: Run tests
+
+on: workflow_call
+
+jobs:
+  run-tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: nymphanamusic/cached-poetry-action@HEAD
+        with:
+          additional-dependency-groups: '["test"]'
+          poetry-version: ${{ vars.POETRY_VERSION }}
+          python-version: ${{ vars.PYTHON_VERSION }}
+
+      - name: Lint with Ruff
+        run: poetry run ruff check --exit-zero --statistics
+
+      - name: Test with Pytest
+        run: poetry run pytest
